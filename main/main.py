@@ -51,7 +51,7 @@ openapi_tags = [
 app = FastAPI(
     title="Delivery Tracker API",
     description="Simple API for managing delivery tracker tables.",
-    version="vFinal18",
+    version="vFinal19",
     openapi_tags=openapi_tags
 )
 #app.include_router(user.router, prefix="/user")  # This matters
