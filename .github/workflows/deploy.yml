@@ -34,8 +34,7 @@ jobs:
           chmod 600 private_key.pem
  
           echo "Copying Deploy Delivery Tracker Backend app to EC2..."
-          scp -o StrictHostKeyChecking=no -i private_key.pem -r . $USER@$HOST:/home/ubuntu/delivery_tracker_back_end
- 
+           rsync -av --exclude='.git' -e "ssh -i private_key.pem -o StrictHostKeyChecking=no" ./ $USER@$HOST:/home/ubuntu/delivery_tracker_back_end/
       - name: Deploy and restart Delivery Tracker Backend app on EC2
         env:
           HOST: ${{ secrets.EC2_HOST }}
