@@ -1,30 +1,19 @@
 name: Deploy Delivery Tracker Backend App
- 
+
 on:
   push:
     branches:
       - main  # Deploy on push to main branch
- 
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
- 
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
- 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'  # Adjust if needed
- 
-      - name: Install dependencies (for validation)
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install -r requirements.txt
- 
-      - name: Copy project files to EC2
+
+      - name: Copy project files to EC2 (excluding .git)
         env:
           HOST: ${{ secrets.EC2_HOST }}
           USER: ${{ secrets.EC2_USER }}
@@ -32,9 +21,10 @@ jobs:
         run: |
           echo "${{ secrets.EC2_PRIVATE_KEY }}" > private_key.pem
           chmod 600 private_key.pem
- 
-          echo "Copying Deploy Delivery Tracker Backend app to EC2..."
-           rsync -av --exclude='.git' -e "ssh -i private_key.pem -o StrictHostKeyChecking=no" ./ $USER@$HOST:/home/ubuntu/delivery_tracker_back_end/
+
+          echo "Copying Delivery Tracker Backend app to EC2..."
+          rsync -av --exclude='.git' -e "ssh -i private_key.pem -o StrictHostKeyChecking=no" ./ $USER@$HOST:/home/ubuntu/delivery_tracker_back_end/
+
       - name: Deploy and restart Delivery Tracker Backend app on EC2
         env:
           HOST: ${{ secrets.EC2_HOST }}
@@ -43,12 +33,25 @@ jobs:
         run: |
           echo "${{ secrets.EC2_PRIVATE_KEY }}" > private_key.pem
           chmod 600 private_key.pem
- 
+
           ssh -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST << 'EOF'
             cd /home/ubuntu/delivery_tracker_back_end
+
+            # Remove old virtual environment if exists
+            if [ -d "venv" ]; then
+              rm -rf venv
+            fi
+
+            # Create new virtual environment
             python3 -m venv venv
             source venv/bin/activate
-            pip install -r requirements.txt
+
+            # Upgrade pip and install dependencies
+            pip install --upgrade pip
+            pip install -r requirements.txt gunicorn uvicorn
+
+            # Reload systemd and restart the service
+            sudo systemctl daemon-reload
             sudo systemctl restart delivery_tracker
-            sudo systemctl status delivery_tracker
+            sudo systemctl status delivery_tracker --no-pager
           EOF
