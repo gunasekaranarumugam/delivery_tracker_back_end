@@ -44,7 +44,11 @@ def create_daily_status(
     db.commit()
     db.refresh(daily_status)
 
+<<<<<<< HEAD
     crud.audit_log(db, "DailyStatus", daily_status.DailyStatusId, "Create", changed_by=current_user.UserId)
+=======
+    crud.audit_log(db, "DailyStatus", daily_status.DailyStatusId, "Create", changed_by=current_user.userName)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return daily_status
 
 
@@ -87,6 +91,7 @@ def list_daily_statuses(
     return query.offset(offset).limit(limit).all()
 
 
+<<<<<<< HEAD
 @router.get("/{id}", response_model=schemas.DailyStatusRead, summary="Get Daily Status by ID")
 def get_daily_status(
     id: str,
@@ -94,6 +99,15 @@ def get_daily_status(
     current_user: models.User = Depends(get_current_user_from_cookie),
 ):
     obj = db.query(models.DailyStatus).filter(models.DailyStatus.DailyStatusId == id).first()
+=======
+@router.get("/{item_id}", response_model=schemas.DailyStatusRead, summary="Get Daily Status by ID")
+def get_daily_status(
+    item_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user_from_cookie),
+):
+    obj = db.query(models.DailyStatus).filter(models.DailyStatus.DailyStatusId == item_id).first()
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not obj:
         raise HTTPException(status_code=404, detail="DailyStatus not found")
 
@@ -118,14 +132,24 @@ def get_daily_status(
     return obj
 
 
+<<<<<<< HEAD
 @router.put("/{id}", response_model=schemas.DailyStatusRead, summary="Update Daily Status")
 def update_daily_status(
     id: str,
+=======
+@router.put("/{item_id}", response_model=schemas.DailyStatusRead, summary="Update Daily Status")
+def update_daily_status(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     payload: schemas.DailyStatusCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
 ):
+<<<<<<< HEAD
     obj = db.query(models.DailyStatus).filter(models.DailyStatus.DailyStatusId == id).first()
+=======
+    obj = db.query(models.DailyStatus).filter(models.DailyStatus.DailyStatusId == item_id).first()
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not obj:
         raise HTTPException(status_code=404, detail="DailyStatus not found")
 
@@ -152,6 +176,7 @@ def update_daily_status(
     db.commit()
     db.refresh(obj)
 
+<<<<<<< HEAD
     crud.audit_log(db, "DailyStatus", obj.DailyStatusId, "Update", changed_by=current_user.UserId)
     return obj
 
@@ -159,6 +184,15 @@ def update_daily_status(
 @router.patch("/{id}/archive", summary="Archive Daily Status (not implemented)")
 def archive_daily_status(
     id: str,
+=======
+    crud.audit_log(db, "DailyStatus", obj.DailyStatusId, "Update", changed_by=current_user.userName)
+    return obj
+
+
+@router.patch("/{item_id}/archive", summary="Archive Daily Status (not implemented)")
+def archive_daily_status(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
 ):

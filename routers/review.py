@@ -81,7 +81,11 @@ def create_item(
     db.commit()
     db.refresh(obj)
 
+<<<<<<< HEAD
     crud.audit_log(db, 'Review', obj.ReviewId, 'Create', changed_by=current_user.UserId)
+=======
+    crud.audit_log(db, 'Review', obj.ReviewId, 'Create', changed_by=current_user.userName)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return obj
 
 
@@ -105,14 +109,24 @@ def list_items(
     return q.offset(offset).limit(limit).all()
 
 
+<<<<<<< HEAD
 @router.get("/{id}", response_model=schemas.ReviewRead, summary="Get Review by ID.")
 def get_item(
     id: str,
+=======
+@router.get("/{item_id}", response_model=schemas.ReviewRead, summary="Get Review by ID.")
+def get_item(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
 ):
     obj = db.query(models.Review).filter(
+<<<<<<< HEAD
         models.Review.ReviewId == id,
+=======
+        models.Review.ReviewId == item_id,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
         models.Review.EntityStatus != "Archived"
     ).first()
     if not obj:
@@ -120,9 +134,15 @@ def get_item(
     return obj
 
 
+<<<<<<< HEAD
 @router.put("/{id}", response_model=schemas.ReviewRead, summary="Update Review record.")
 def update_item(
     id: str,
+=======
+@router.put("/{item_id}", response_model=schemas.ReviewRead, summary="Update Review record.")
+def update_item(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     payload: schemas.ReviewCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
@@ -134,7 +154,11 @@ def update_item(
     ])
 
     obj = db.query(models.Review).filter(
+<<<<<<< HEAD
         models.Review.ReviewId == id,
+=======
+        models.Review.ReviewId == item_id,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
         models.Review.EntityStatus != "Archived"
     ).first()
     if not obj:
@@ -149,6 +173,7 @@ def update_item(
     db.commit()
     db.refresh(obj)
 
+<<<<<<< HEAD
     crud.audit_log(db, 'Review', obj.ReviewId, 'Update', changed_by=current_user.UserId)
     return obj
 
@@ -156,6 +181,15 @@ def update_item(
 @router.patch("/{id}/archive", summary="Archive Review record.")
 def archive_item(
     id: str,
+=======
+    crud.audit_log(db, 'Review', obj.ReviewId, 'Update', changed_by=current_user.userName)
+    return obj
+
+
+@router.patch("/{item_id}/archive", summary="Archive Review record.")
+def archive_item(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
 ):
@@ -166,7 +200,11 @@ def archive_item(
     ])
 
     obj = db.query(models.Review).filter(
+<<<<<<< HEAD
         models.Review.ReviewId == id,
+=======
+        models.Review.ReviewId == item_id,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
         models.Review.EntityStatus != "Archived"
     ).first()
     if not obj:
@@ -178,5 +216,9 @@ def archive_item(
 
     db.commit()
 
+<<<<<<< HEAD
     crud.audit_log(db, 'Review', obj.ReviewId, 'Archive', changed_by=current_user.UserId)
+=======
+    crud.audit_log(db, 'Review', obj.ReviewId, 'Archive', changed_by=current_user.userName)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return {"status": "archived", "review_id": obj.ReviewId}

@@ -81,7 +81,11 @@ def create_deliverable(
     db.commit()
     db.refresh(deliverable)
 
+<<<<<<< HEAD
     crud.audit_log(db, 'Deliverable', deliverable.DeliverableId, 'Create',changed_by=current_user.UserId) 
+=======
+    crud.audit_log(db, 'Deliverable', deliverable.DeliverableId, 'Create') 
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return deliverable
 
 
@@ -105,6 +109,7 @@ def list_deliverables(
     return query.offset(offset).limit(limit).all()
 
 
+<<<<<<< HEAD
 @router.get("/{id}", response_model=schemas.DeliverableRead, summary="Get deliverable by ID")
 def get_deliverable(
     id: str,
@@ -112,6 +117,15 @@ def get_deliverable(
     current_user: models.User = Depends(get_current_user_from_cookie),
 ):
     obj = db.query(models.Deliverable).filter_by(DeliverableId=id).first()
+=======
+@router.get("/{item_id}", response_model=schemas.DeliverableRead, summary="Get deliverable by ID")
+def get_deliverable(
+    item_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user_from_cookie),
+):
+    obj = db.query(models.Deliverable).filter_by(DeliverableId=item_id).first()
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not obj:
         raise HTTPException(status_code=404, detail="Deliverable not found")
 
@@ -124,9 +138,15 @@ def get_deliverable(
     return obj
 
 
+<<<<<<< HEAD
 @router.put("/{id}", response_model=schemas.DeliverableRead, summary="Update Deliverable")
 def update_deliverable(
     id: str,
+=======
+@router.put("/{item_id}", response_model=schemas.DeliverableRead, summary="Update Deliverable")
+def update_deliverable(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     payload: schemas.DeliverableCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
@@ -134,7 +154,11 @@ def update_deliverable(
     if current_user.role_name not in [models.Role.BU_HEAD, models.Role.PROJECT_MANAGER, models.Role.ADMIN]:
         raise HTTPException(status_code=403, detail="Not authorized to update deliverables")
 
+<<<<<<< HEAD
     obj = db.query(models.Deliverable).filter_by(DeliverableId=id).first()
+=======
+    obj = db.query(models.Deliverable).filter_by(DeliverableId=item_id).first()
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not obj:
         raise HTTPException(status_code=404, detail="Deliverable not found")
 
@@ -148,6 +172,7 @@ def update_deliverable(
     db.commit()
     db.refresh(obj)
 
+<<<<<<< HEAD
     crud.audit_log(db, 'Deliverable', obj.DeliverableId, 'Update', changed_by=current_user.UserId)
     return obj
 
@@ -155,6 +180,15 @@ def update_deliverable(
 @router.patch("/{id}/archive", summary="Archive Deliverable")
 def archive_deliverable(
     id: str,
+=======
+    crud.audit_log(db, 'Deliverable', obj.DeliverableId, 'Update', changed_by=current_user.userName)
+    return obj
+
+
+@router.patch("/{item_id}/archive", summary="Archive Deliverable")
+def archive_deliverable(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
 ):
@@ -172,5 +206,9 @@ def archive_deliverable(
     obj.UpdatedAt = datetime.utcnow()
     db.commit()
 
+<<<<<<< HEAD
     crud.audit_log(db, 'Deliverable', obj.DeliverableId, 'Archive', changed_by=current_user.UserId)
+=======
+    crud.audit_log(db, 'Deliverable', obj.DeliverableId, 'Archive', changed_by=current_user.userName)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return {"status": "archived"}

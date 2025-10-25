@@ -70,7 +70,11 @@ def create_item(
     db.commit()
     db.refresh(obj)
 
+<<<<<<< HEAD
     crud.audit_log(db, 'Task', getattr(obj, 'TaskId'), 'Create',changed_by=current_user.UserId)
+=======
+    crud.audit_log(db, 'Task', getattr(obj, 'TaskId'), 'Create')
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
 
     return obj
 
@@ -97,9 +101,15 @@ def list_items(
 
     return query.offset(offset).limit(limit).all()
 
+<<<<<<< HEAD
 @router.get("/{id}", response_model=schemas.TaskRead, summary="Get Task by ID.")
 def get_item(
     id: str,
+=======
+@router.get("/{item_id}", response_model=schemas.TaskRead, summary="Get Task by ID.")
+def get_item(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie)
 ):
@@ -112,7 +122,11 @@ def get_item(
     if current_user.role_name == models.Role.PROJECT_MANAGER or current_user.role_name == models.Role.BU_HEAD:
         query = (
             query.join(models.Deliverable, models.Task.DeliverableId == models.Deliverable.DeliverableId)
+<<<<<<< HEAD
             .filter(models.Task.TaskId == id)
+=======
+            .filter(models.Task.TaskId == item_id)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
             .filter(models.Deliverable.BUId == current_user.BUId)
         )
         obj = query.first()
@@ -147,9 +161,15 @@ def list_items(
     return tasks
 
 
+<<<<<<< HEAD
 @router.put("/{id}", response_model=schemas.TaskRead, summary="Update Task record.")
 def update_item(
     id: str,
+=======
+@router.put("/{item_id}", response_model=schemas.TaskRead, summary="Update Task record.")
+def update_item(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     payload: schemas.TaskCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie)
@@ -157,7 +177,11 @@ def update_item(
     allowed_roles = [models.Role.ADMIN, models.Role.BU_HEAD, models.Role.PROJECT_MANAGER]
     check_permission(current_user, allowed_roles)
 
+<<<<<<< HEAD
     obj = db.query(models.Task).get(id)
+=======
+    obj = db.query(models.Task).get(item_id)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not obj:
         raise HTTPException(status_code=404, detail="Task not found")
 
@@ -175,6 +199,7 @@ def update_item(
     db.commit()
     db.refresh(obj)
 
+<<<<<<< HEAD
     crud.audit_log(db, 'Task', getattr(obj, 'TaskId'), 'Update', changed_by=current_user.UserId)
 
     return obj
@@ -182,13 +207,26 @@ def update_item(
 @router.patch("/{id}/archive", summary="Archive Task record.")
 def archive_item(
     id: str,
+=======
+    crud.audit_log(db, 'Task', getattr(obj, 'TaskId'), 'Update', changed_by=current_user.userName)
+
+    return obj
+
+@router.patch("/{item_id}/archive", summary="Archive Task record.")
+def archive_item(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie)
 ):
     allowed_roles = [models.Role.ADMIN, models.Role.BU_HEAD, models.Role.PROJECT_MANAGER]
     check_permission(current_user, allowed_roles)
 
+<<<<<<< HEAD
     obj = db.query(models.Task).get(id)
+=======
+    obj = db.query(models.Task).get(item_id)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not obj:
         raise HTTPException(status_code=404, detail="Task not found")
 
@@ -198,6 +236,7 @@ def archive_item(
     crud.audit_log(db, 'Task', getattr(obj, 'TaskId'), 'Archive', changed_by=current_user.userName)
 
     return {"status": "archived"}
+<<<<<<< HEAD
 
 
 @router.get("/{id}", response_model=schemas.TaskRead, summary="Get Task details by Task ID")
@@ -251,3 +290,5 @@ def get_task_by_id(
 
     # If none of the checks passed, deny access.
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to view this task.")
+=======
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef

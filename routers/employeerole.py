@@ -1,9 +1,15 @@
+<<<<<<< HEAD
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from typing import List, Optional
+=======
+"""from fastapi import APIRouter, Depends, HTTPException, Query
+from typing import List
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
 from sqlalchemy.orm import Session
 from main import models, schemas, crud
 from main.database import get_db
 from main.auth import get_current_user_from_cookie  # adjust import as per your project structure
+<<<<<<< HEAD
 from fastapi.security import OAuth2PasswordBearer
 router = APIRouter()
 def now():
@@ -42,6 +48,10 @@ def get_current_user_from_cookie(
         raise HTTPException(status_code=404, detail="User not found")
 
     return user
+=======
+
+router = APIRouter()
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
 
 @router.post("/", response_model=schemas.EmployeeRoleRead, summary="Add new Employee Role record.")
 def create_item(
@@ -73,7 +83,11 @@ def create_item(
     db.commit()
     db.refresh(obj)
 
+<<<<<<< HEAD
     crud.audit_log(db, 'EmployeeRole', getattr(obj, 'EmployeeRoleId'), 'Create',changed_by=current_user.UserId)
+=======
+    crud.audit_log(db, 'EmployeeRole', getattr(obj, 'EmployeeRoleId'), 'Create')
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return obj
 
 
@@ -93,6 +107,7 @@ def list_items(
     return q.offset(offset).limit(limit).all()
 
 
+<<<<<<< HEAD
 @router.get("/{id}", response_model=schemas.EmployeeRoleRead, summary="Get Employee Role by ID.")
 def get_item(
     id: str,
@@ -100,6 +115,15 @@ def get_item(
     current_user: models.User = Depends(get_current_user_from_cookie),
 ):
     obj = db.query(models.EmployeeRole).get(id)
+=======
+@router.get("/{item_id}", response_model=schemas.EmployeeRoleRead, summary="Get Employee Role by ID.")
+def get_item(
+    item_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user_from_cookie),
+):
+    obj = db.query(models.EmployeeRole).get(item_id)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not obj:
         raise HTTPException(status_code=404, detail="Employee Role not found")
 
@@ -111,9 +135,15 @@ def get_item(
     return obj
 
 
+<<<<<<< HEAD
 @router.put("/{id}", response_model=schemas.EmployeeRoleRead, summary="Update Employee Role record.")
 def update_item(
     id: str,
+=======
+@router.put("/{item_id}", response_model=schemas.EmployeeRoleRead, summary="Update Employee Role record.")
+def update_item(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     payload: schemas.EmployeeRoleCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
@@ -121,7 +151,11 @@ def update_item(
     if current_user.role_name not in ["ADMIN", "BU_HEAD"]:
         raise HTTPException(status_code=403, detail="Not authorized to update employee roles")
 
+<<<<<<< HEAD
     obj = db.query(models.EmployeeRole).get(id)
+=======
+    obj = db.query(models.EmployeeRole).get(item_id)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not obj:
         raise HTTPException(status_code=404, detail="Employee Role not found")
 
@@ -134,6 +168,7 @@ def update_item(
     db.commit()
     db.refresh(obj)
 
+<<<<<<< HEAD
     crud.audit_log(db, 'EmployeeRole', getattr(obj, 'EmployeeRoleId'), 'Update', changed_by=current_user.UserId)
     return obj
 
@@ -201,3 +236,8 @@ def update_employee_partial(
     
     return obj
 
+=======
+    crud.audit_log(db, 'EmployeeRole', getattr(obj, 'EmployeeRoleId'), 'Update', changed_by=current_user.userName)
+    return obj
+"""
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef

@@ -10,5 +10,8 @@ passlib
 passlib[argon2]
 PyJWT
 pymysql
+<<<<<<< HEAD
 alembic
 
+=======
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef

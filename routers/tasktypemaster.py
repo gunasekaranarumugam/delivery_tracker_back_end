@@ -63,7 +63,11 @@ def create_item(
     db.commit()
     db.refresh(obj)
 
+<<<<<<< HEAD
     crud.audit_log(db, 'TaskTypeMaster', obj.TaskTypeId, 'Create',changed_by=current_user.UserId)
+=======
+    crud.audit_log(db, 'TaskTypeMaster', obj.TaskTypeId, 'Create')
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return obj
 
 
@@ -82,9 +86,15 @@ def list_items(
     return query.offset(offset).limit(limit).all()
 
 
+<<<<<<< HEAD
 @router.get("/{id}", response_model=schemas.TaskTypeMasterRead, summary="Get Task Type by ID.")
 def get_item(
     id: str,
+=======
+@router.get("/{item_id}", response_model=schemas.TaskTypeMasterRead, summary="Get Task Type by ID.")
+def get_item(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie)
 ):
@@ -92,15 +102,25 @@ def get_item(
     if current_user.role_name in disallowed_roles:
         raise HTTPException(status_code=403, detail="Can't view details")
 
+<<<<<<< HEAD
     obj = db.query(models.TaskTypeMaster).get(id)
+=======
+    obj = db.query(models.TaskTypeMaster).get(item_id)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not obj:
         raise HTTPException(status_code=404, detail="Task Type not found")
     return obj
 
 
+<<<<<<< HEAD
 @router.put("/{id}", response_model=schemas.TaskTypeMasterRead, summary="Update Task Type record.")
 def update_item(
     id: str,
+=======
+@router.put("/{item_id}", response_model=schemas.TaskTypeMasterRead, summary="Update Task Type record.")
+def update_item(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     payload: schemas.TaskTypeMasterCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie)
@@ -108,7 +128,11 @@ def update_item(
     allowed_roles = [models.Role.ADMIN, models.Role.PROJECT_MANAGER]
     check_permission(current_user, allowed_roles)
 
+<<<<<<< HEAD
     obj = db.query(models.TaskTypeMaster).get(id)
+=======
+    obj = db.query(models.TaskTypeMaster).get(item_id)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not obj:
         raise HTTPException(status_code=404, detail="Task Type not found")
 
@@ -118,6 +142,7 @@ def update_item(
     db.commit()
     db.refresh(obj)
 
+<<<<<<< HEAD
     crud.audit_log(db, 'TaskTypeMaster', obj.TaskTypeId, 'Update', changed_by=current_user.UserId)
     return obj
 
@@ -162,4 +187,7 @@ def update_task_type_master_partial(
         'Update (Partial)',
         changed_by=current_user.UserId
     )
+=======
+    crud.audit_log(db, 'TaskTypeMaster', obj.TaskTypeId, 'Update', changed_by=current_user.userName)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return obj

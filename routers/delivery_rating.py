@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 from fastapi import APIRouter, Depends, HTTPException, status, Cookie, Query
+=======
+from fastapi import APIRouter, Depends, HTTPException, status, Cookie
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
 from sqlalchemy.orm import Session
 from typing import Optional,List
 import re
@@ -51,7 +55,11 @@ def is_pm_or_admin(user: models.User) -> bool:
     # Replace these strings with your enum if available
     return user.role_name in [models.Role.PROJECT_MANAGER, models.Role.ADMIN]
 
+<<<<<<< HEAD
 @router.post("/", response_model=schemas.DeliveryRatingRead, status_code=status.HTTP_201_CREATED)
+=======
+@router.post("/", response_model=schemas.DeliveryRatingOut, status_code=status.HTTP_201_CREATED)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
 def create_rating(
     rating: schemas.DeliveryRatingCreate,
     db: Session = Depends(get_db),
@@ -84,27 +92,46 @@ def create_rating(
     db.commit()
     db.refresh(new_rating)
 
+<<<<<<< HEAD
     crud.audit_log(db, "DeliveryRating", new_rating.RatingId, "Create", changed_by=current_user.UserId)
     return new_rating
 
 @router.get("/{id}", response_model=schemas.DeliveryRatingRead)
 def get_rating(
     id: str,
+=======
+    crud.audit_log(db, "DeliveryRating", new_rating.RatingId, "Create", changed_by=current_user.userName)
+    return new_rating
+
+@router.get("/{rating_id}", response_model=schemas.DeliveryRatingOut)
+def get_rating(
+    rating_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
 ):
     if not is_pm_or_admin(current_user):
         raise HTTPException(status_code=403, detail="Only Admin or Project Manager can view ratings.")
 
+<<<<<<< HEAD
     rating = db.query(models.DeliveryRating).filter(models.DeliveryRating.RatingId == id).first()
+=======
+    rating = db.query(models.DeliveryRating).filter(models.DeliveryRating.RatingId == rating_id).first()
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not rating:
         raise HTTPException(status_code=404, detail="Rating not found")
 
     return rating
 
+<<<<<<< HEAD
 @router.patch("/{id}", response_model=schemas.DeliveryRatingRead)
 def update_rating(
     id: str,
+=======
+@router.patch("/{rating_id}", response_model=schemas.DeliveryRatingOut)
+def update_rating(
+    rating_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     rating_update: schemas.DeliveryRatingUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
@@ -112,7 +139,11 @@ def update_rating(
     if not is_pm_or_admin(current_user):
         raise HTTPException(status_code=403, detail="Only Admin or Project Manager can update ratings.")
 
+<<<<<<< HEAD
     rating = db.query(models.DeliveryRating).filter(models.DeliveryRating.RatingId == id).first()
+=======
+    rating = db.query(models.DeliveryRating).filter(models.DeliveryRating.RatingId == rating_id).first()
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not rating:
         raise HTTPException(status_code=404, detail="Rating not found")
 
@@ -122,6 +153,7 @@ def update_rating(
     db.commit()
     db.refresh(rating)
 
+<<<<<<< HEAD
     crud.audit_log(db, "DeliveryRating", rating.RatingId, "Update", changed_by=current_user.UserId)
     return rating
 
@@ -215,3 +247,7 @@ def update_delivery_rating_full(
     )
     
     return obj
+=======
+    crud.audit_log(db, "DeliveryRating", rating.RatingId, "Update", changed_by=current_user.userName)
+    return rating
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef

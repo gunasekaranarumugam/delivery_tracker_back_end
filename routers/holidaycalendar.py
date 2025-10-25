@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 from fastapi import APIRouter, Depends, HTTPException, Query, Cookie, Request
+=======
+from fastapi import APIRouter, Depends, HTTPException, Query, Cookie
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
 from typing import List,Optional
 from sqlalchemy.orm import Session
 from main import models, schemas, crud
@@ -13,6 +17,7 @@ from sqlalchemy.orm import joinedload
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/token")
 SECRET_KEY = "super-secret-key"
 ALGORITHM = "HS256"
+<<<<<<< HEAD
 
 
 def decode_token_and_get_username(token: str) -> str:
@@ -43,6 +48,28 @@ def get_current_user_from_cookie(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+=======
+# Auth: Get current user from JWT token in cookie
+def get_current_user_from_cookie(
+    access_token: str = Cookie(None),
+    token: Optional[str] = Depends(oauth2_scheme), 
+    db: Session = Depends(get_db)
+) -> models.User:
+    if not access_token:
+        raise HTTPException(status_code=401, detail="Access token missing")
+
+    try:
+        payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("sub")
+        if not username:
+            raise HTTPException(status_code=401, detail="Invalid token payload")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    user = db.query(models.User).options(joinedload(models.User.role)).filter(models.User.userName == username).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found, please login.")
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return user
 
 @router.post("/", response_model=schemas.HolidayCalendarRead, summary="Add new Holiday record.")
@@ -55,11 +82,19 @@ def create_item(
         raise HTTPException(status_code=403, detail="Not authorized to manage holiday calendar")
 
     # Check if HolidayId already exists
+<<<<<<< HEAD
     existing = db.query(models.HolidayCalendar).filter_by(HolidayCalendarId=payload.HolidayCalendarId).first()
     if existing:
         raise HTTPException(status_code=400, detail="HolidayId already exists")
 
     #Check if holiday on this date already exists
+=======
+    existing = db.query(models.HolidayCalendar).filter_by(HolidayId=payload.HolidayId).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="HolidayId already exists")
+
+    # Check if holiday on this date already exists
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     existing_date = db.query(models.HolidayCalendar).filter_by(HolidayDate=payload.HolidayDate).first()
     if existing_date:
         raise HTTPException(status_code=400, detail="A holiday already exists on this date")
@@ -68,9 +103,14 @@ def create_item(
     db.add(obj)
     db.commit()
     db.refresh(obj)
+<<<<<<< HEAD
     print(current_user)
     # Correct: pass actual UserId
     crud.audit_log(db, 'HolidayCalendar', obj.HolidayCalendarId, 'Create', changed_by=current_user.UserId)
+=======
+
+    crud.audit_log(db, 'HolidayCalendar', obj.HolidayId, 'Create', changed_by=current_user.userName)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return obj
 
 @router.get("/", response_model=List[schemas.HolidayCalendarRead], summary="Get list of Holiday records.")
@@ -83,6 +123,7 @@ def list_items(
     q = db.query(models.HolidayCalendar)
     return q.offset(offset).limit(limit).all()
 
+<<<<<<< HEAD
 @router.get("/{id}", response_model=schemas.HolidayCalendarRead, summary="Get Holiday by ID.")
 def get_item(
     id: str,
@@ -90,13 +131,28 @@ def get_item(
     token: Optional[str] = Depends(oauth2_scheme), 
 ):
     obj = db.query(models.HolidayCalendar).get(id)
+=======
+@router.get("/{item_id}", response_model=schemas.HolidayCalendarRead, summary="Get Holiday by ID.")
+def get_item(
+    item_id: str,
+    db: Session = Depends(get_db),
+    token: Optional[str] = Depends(oauth2_scheme), 
+):
+    obj = db.query(models.HolidayCalendar).get(item_id)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not obj:
         raise HTTPException(status_code=404, detail="Holiday not found")
     return obj
 
+<<<<<<< HEAD
 @router.put("/{id}", response_model=schemas.HolidayCalendarRead, summary="Update Holiday record.")
 def update_item(
     id: str,
+=======
+@router.put("/{item_id}", response_model=schemas.HolidayCalendarRead, summary="Update Holiday record.")
+def update_item(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     payload: schemas.HolidayCalendarCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
@@ -104,7 +160,11 @@ def update_item(
     if current_user.role_name not in ["ADMIN", "BU-HEAD"]:
         raise HTTPException(status_code=403, detail="Not authorized to update holiday calendar")
 
+<<<<<<< HEAD
     obj = db.query(models.HolidayCalendar).get(id)
+=======
+    obj = db.query(models.HolidayCalendar).get(item_id)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not obj:
         raise HTTPException(status_code=404, detail="Holiday not found")
 
@@ -122,6 +182,7 @@ def update_item(
     db.commit()
     db.refresh(obj)
 
+<<<<<<< HEAD
     crud.audit_log(db, 'HolidayCalendar', obj.HolidayId, 'Update', changed_by=current_user.UserId)
     return obj
 
@@ -180,3 +241,7 @@ def update_holiday_calendar_partial(
     )
     
     return obj
+=======
+    crud.audit_log(db, 'HolidayCalendar', obj.HolidayId, 'Update', changed_by=current_user.userName)
+    return obj
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef

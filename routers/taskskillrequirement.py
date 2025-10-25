@@ -70,7 +70,11 @@ def create_item(
     db.commit()
     db.refresh(obj)
 
+<<<<<<< HEAD
     crud.audit_log(db, 'TaskSkillRequirement', obj.TaskSkillRequirementId, 'Create', changed_by=current_user.UserId)
+=======
+    crud.audit_log(db, 'TaskSkillRequirement', obj.TaskSkillRequirementId, 'Create', changed_by=current_user.userName)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return obj
 
 
@@ -90,9 +94,15 @@ def list_items(
     return query.offset(offset).limit(limit).all()
 
 
+<<<<<<< HEAD
 @router.get("/{id}", response_model=schemas.TaskSkillRequirementRead, summary="Get Task Skill Requirement by ID.")
 def get_item(
     id: str,
+=======
+@router.get("/{item_id}", response_model=schemas.TaskSkillRequirementRead, summary="Get Task Skill Requirement by ID.")
+def get_item(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie)
 ):
@@ -100,15 +110,25 @@ def get_item(
     if current_user.role_name in disallowed_roles:
         raise HTTPException(status_code=403, detail="Can't view details")
 
+<<<<<<< HEAD
     obj = db.query(models.TaskSkillRequirement).get(id)
+=======
+    obj = db.query(models.TaskSkillRequirement).get(item_id)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not obj:
         raise HTTPException(status_code=404, detail="Task Skill Requirement not found")
     return obj
 
 
+<<<<<<< HEAD
 @router.put("/{id}", response_model=schemas.TaskSkillRequirementRead, summary="Update Task Skill Requirement record.")
 def update_item(
     id: str,
+=======
+@router.put("/{item_id}", response_model=schemas.TaskSkillRequirementRead, summary="Update Task Skill Requirement record.")
+def update_item(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     payload: schemas.TaskSkillRequirementCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie)
@@ -116,7 +136,11 @@ def update_item(
     allowed_roles = [models.Role.ADMIN, models.Role.PROJECT_MANAGER]
     check_permission(current_user, allowed_roles)
 
+<<<<<<< HEAD
     obj = db.query(models.TaskSkillRequirement).get(id)
+=======
+    obj = db.query(models.TaskSkillRequirement).get(item_id)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not obj:
         raise HTTPException(status_code=404, detail="Task Skill Requirement not found")
 
@@ -126,6 +150,7 @@ def update_item(
     db.commit()
     db.refresh(obj)
 
+<<<<<<< HEAD
     crud.audit_log(db, 'TaskSkillRequirement', obj.TaskSkillRequirementId, 'Update', changed_by=current_user.UserId)
     return obj
 
@@ -176,4 +201,7 @@ def update_task_skill_requirement_partial(
         changed_by=current_user.UserId 
     )
     
+=======
+    crud.audit_log(db, 'TaskSkillRequirement', obj.TaskSkillRequirementId, 'Update', changed_by=current_user.userName)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return obj

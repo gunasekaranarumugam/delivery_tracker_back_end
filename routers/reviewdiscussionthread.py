@@ -72,7 +72,11 @@ def create_item(
     db.add(obj)
     db.commit()
     db.refresh(obj)
+<<<<<<< HEAD
     crud.audit_log(db, 'ReviewDiscussionThread', getattr(obj, 'ThreadId'), 'Create',changed_by=current_user.UserId)
+=======
+    crud.audit_log(db, 'ReviewDiscussionThread', getattr(obj, 'ThreadId'), 'Create')
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return obj
 
 @router.get("/", response_model=List[schemas.ReviewDiscussionThreadRead], summary="Get list of Review Thread records.")
@@ -85,23 +89,39 @@ def list_items(
     q = db.query(models.ReviewDiscussionThread).filter(models.ReviewDiscussionThread.EntityStatus != "Archived")
     return q.offset(offset).limit(limit).all()
 
+<<<<<<< HEAD
 @router.get("/{id}", response_model=schemas.ReviewDiscussionThreadRead, summary="Get Review Thread by ID.")
 def get_item(
     id: str,
+=======
+@router.get("/{item_id}", response_model=schemas.ReviewDiscussionThreadRead, summary="Get Review Thread by ID.")
+def get_item(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
 ):
     obj = db.query(models.ReviewDiscussionThread).filter(
+<<<<<<< HEAD
         models.ReviewDiscussionThread.ThreadId == id,
+=======
+        models.ReviewDiscussionThread.ThreadId == item_id,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
         models.ReviewDiscussionThread.EntityStatus != "Archived"
     ).first()
     if not obj:
         raise HTTPException(status_code=404, detail="Review Thread not found")
     return obj
 
+<<<<<<< HEAD
 @router.put("/{id}", response_model=schemas.ReviewDiscussionThreadRead, summary="Update Review Thread record.")
 def update_item(
     id: str,
+=======
+@router.put("/{item_id}", response_model=schemas.ReviewDiscussionThreadRead, summary="Update Review Thread record.")
+def update_item(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     payload: schemas.ReviewDiscussionThreadCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
@@ -109,7 +129,11 @@ def update_item(
     check_permission(current_user, [models.Role.ADMIN, models.Role.BU_HEAD, models.Role.PROJECT_MANAGER])
 
     obj = db.query(models.ReviewDiscussionThread).filter(
+<<<<<<< HEAD
         models.ReviewDiscussionThread.ThreadId == id,
+=======
+        models.ReviewDiscussionThread.ThreadId == item_id,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
         models.ReviewDiscussionThread.EntityStatus != "Archived"
     ).first()
     if not obj:
@@ -123,6 +147,7 @@ def update_item(
 
     db.commit()
     db.refresh(obj)
+<<<<<<< HEAD
     crud.audit_log(db, 'ReviewDiscussionThread', getattr(obj, 'ThreadId'), 'Update', changed_by=current_user.UserId)
     return obj
 
@@ -184,4 +209,7 @@ def update_discussion_thread_partial(
         changed_by=current_user.UserId 
     )
     
+=======
+    crud.audit_log(db, 'ReviewDiscussionThread', getattr(obj, 'ThreadId'), 'Update', changed_by=current_user.userName)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return obj

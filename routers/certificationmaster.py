@@ -60,7 +60,11 @@ def create_certification(
     db.commit()
     db.refresh(obj)
 
+<<<<<<< HEAD
     crud.audit_log(db, 'CertificationMaster', obj.CertificationId, 'Create', changed_by=current_user.UserId)
+=======
+    crud.audit_log(db, 'CertificationMaster', obj.CertificationId, 'Create', changed_by=current_user.userName)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return obj
 
 
@@ -76,6 +80,7 @@ def list_certifications(
 
 
 # ✅ GET Certification by ID (anyone logged in)
+<<<<<<< HEAD
 @router.get("/{id}", response_model=schemas.CertificationMasterRead, summary="Get Certification by ID.")
 def get_certification(
     id: str,
@@ -83,15 +88,30 @@ def get_certification(
     current_user: models.User = Depends(get_current_user_from_cookie),
 ):
     obj = db.query(models.CertificationMaster).get(id)
+=======
+@router.get("/{item_id}", response_model=schemas.CertificationMasterRead, summary="Get Certification by ID.")
+def get_certification(
+    item_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user_from_cookie),
+):
+    obj = db.query(models.CertificationMaster).get(item_id)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not obj:
         raise HTTPException(status_code=404, detail="Certification not found")
     return obj
 
 
 # ✅ UPDATE Certification (Admin only)
+<<<<<<< HEAD
 @router.put("/{id}", response_model=schemas.CertificationMasterRead, summary="Update Certification record.")
 def update_certification(
     id: str,
+=======
+@router.put("/{item_id}", response_model=schemas.CertificationMasterRead, summary="Update Certification record.")
+def update_certification(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     payload: schemas.CertificationMasterCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
@@ -99,7 +119,11 @@ def update_certification(
     if current_user.role_name != models.Role.ADMIN:
         raise HTTPException(status_code=403, detail="Only Admin can update certifications.")
 
+<<<<<<< HEAD
     obj = db.query(models.CertificationMaster).get(id)
+=======
+    obj = db.query(models.CertificationMaster).get(item_id)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not obj:
         raise HTTPException(status_code=404, detail="Certification not found")
 
@@ -108,6 +132,7 @@ def update_certification(
     db.commit()
     db.refresh(obj)
 
+<<<<<<< HEAD
     crud.audit_log(db, 'CertificationMaster', obj.CertificationId, 'Update', changed_by=current_user.UserId)
     return obj
 
@@ -156,4 +181,7 @@ def update_certification_master_partial(
         changed_by=current_user.UserId 
     )
     
+=======
+    crud.audit_log(db, 'CertificationMaster', obj.CertificationId, 'Update', changed_by=current_user.userName)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return obj

@@ -8,7 +8,11 @@
 --  1. BUSINESS & PROJECT HIERARCHY
 -- ===============================================================
 
+<<<<<<< HEAD
 CREATE TABLE user (
+=======
+CREATE TABLE User (
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     `UserId` VARCHAR(50) NOT NULL,
     `userName` VARCHAR(200) NOT NULL,
     `password` VARCHAR(200) NOT NULL,

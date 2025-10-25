@@ -2,10 +2,17 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 import uuid
 from typing import List
+<<<<<<< HEAD
 from main import models, schemas, crud
 from main.database import get_db
 from main.models import EmployeeLeave, User, Employee, Role
 from main.schemas import EmployeeLeaveCreate, EmployeeLeaveRead, EmployeeLeaveUpdate
+=======
+
+from main.database import get_db
+from main.models import EmployeeLeave, User, Employee, Role
+from main.schemas import EmployeeLeaveCreate, EmployeeLeaveOut, EmployeeLeaveUpdate
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
 from .deliverable import get_current_user_from_cookie
 
 router = APIRouter()
@@ -17,7 +24,11 @@ def verify_bu_access(user: User, employee_bu_id: str):
     if user.role_name != Role.ADMIN and employee_bu_id != user.BUId:
         raise HTTPException(status_code=403, detail="Not authorized for this Business Unit")
 
+<<<<<<< HEAD
 @router.post("/", response_model=EmployeeLeaveCreate, status_code=status.HTTP_201_CREATED)
+=======
+@router.post("/", response_model=EmployeeLeaveOut, status_code=status.HTTP_201_CREATED)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
 def create_employee_leave(
     data: EmployeeLeaveCreate,
     db: Session = Depends(get_db),
@@ -51,9 +62,15 @@ def create_employee_leave(
     db.refresh(new_leave)
     return new_leave
 
+<<<<<<< HEAD
 @router.get("/{id}", response_model=EmployeeLeaveRead)
 def get_employee_leave(
     id: str,
+=======
+@router.get("/{leave_id}", response_model=EmployeeLeaveOut)
+def get_employee_leave(
+    leave_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user_from_cookie),
 ):
@@ -78,9 +95,15 @@ def get_employee_leave(
 
     return leave
 
+<<<<<<< HEAD
 @router.patch("/{id}", response_model=EmployeeLeaveUpdate)
 def update_employee_leave(
     id: str,
+=======
+@router.patch("/{leave_id}", response_model=EmployeeLeaveOut)
+def update_employee_leave(
+    leave_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     data: EmployeeLeaveUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user_from_cookie),
@@ -88,7 +111,11 @@ def update_employee_leave(
     if current_user.role_name not in ALLOWED_ROLES_CREATE_UPDATE:
         raise HTTPException(status_code=403, detail="Not authorized to update employee leaves")
 
+<<<<<<< HEAD
     leave = db.query(EmployeeLeave).filter(EmployeeLeave.LeaveId == id).first()
+=======
+    leave = db.query(EmployeeLeave).filter(EmployeeLeave.LeaveId == leave_id).first()
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not leave:
         raise HTTPException(status_code=404, detail="Employee Leave not found")
 
@@ -106,7 +133,11 @@ def update_employee_leave(
     db.refresh(leave)
     return leave
 
+<<<<<<< HEAD
 @router.get("/", response_model=List[EmployeeLeaveRead], summary="List leaves")
+=======
+@router.get("/", response_model=List[EmployeeLeaveOut], summary="List leaves")
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
 def list_employee_leaves(
     limit: int = 100,
     offset: int = 0,
@@ -124,6 +155,7 @@ def list_employee_leaves(
 
     leaves = query.offset(offset).limit(limit).all()
     return leaves
+<<<<<<< HEAD
 
 @router.put("/{id}", response_model=schemas.EmployeeLeaveRead, summary="Fully update (replace) an Employee Leave request.")
 def update_employee_leave_full(
@@ -191,3 +223,5 @@ def update_employee_leave_full(
     )
     
     return obj
+=======
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef

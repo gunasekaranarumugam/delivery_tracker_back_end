@@ -1,7 +1,11 @@
 from datetime import datetime
 from main import models
 
+<<<<<<< HEAD
 """def audit_log(
+=======
+def audit_log(
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     db, 
     entity_type: str, 
     entity_id: str, 
@@ -12,7 +16,11 @@ from main import models
     action_performed_by: str = 'system'
 ):
     al = models.AuditLog(
+<<<<<<< HEAD
         AuditLogId=f"AUD-{int(datetime.utcnow().timestamp() * 1000)}",
+=======
+        AuditId=f"AUD-{int(datetime.utcnow().timestamp() * 1000)}",
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
         EntityType=entity_type,
         EntityId=entity_id,
         Action=action,
@@ -23,6 +31,7 @@ from main import models
         ActionPerformedAt=datetime.utcnow()
     )
     db.add(al)
+<<<<<<< HEAD
     db.commit()"""
 
 from datetime import datetime
@@ -49,3 +58,6 @@ def audit_log(
     db.add(al)
     db.commit()
 
+=======
+    db.commit()
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef

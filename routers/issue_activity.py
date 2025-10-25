@@ -43,7 +43,11 @@ def create_issue_activity(
     db.commit()
     db.refresh(issue_activity)
 
+<<<<<<< HEAD
     crud.audit_log(db, "IssueActivity", issue_activity.IssueActivityId, "Create", changed_by=current_user.UserId)
+=======
+    crud.audit_log(db, "IssueActivity", issue_activity.IssueActivityId, "Create", changed_by=current_user.userName)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return issue_activity
 
 
@@ -74,6 +78,7 @@ def list_issue_activities(
     return query.offset(offset).limit(limit).all()
 
 
+<<<<<<< HEAD
 @router.get("/{id}", response_model=schemas.IssueActivityRead, summary="Get Issue Activity by ID")
 def get_issue_activity(
     id: str,
@@ -81,6 +86,15 @@ def get_issue_activity(
     current_user: models.User = Depends(get_current_user_from_cookie),
 ):
     obj = db.query(models.IssueActivity).filter(models.IssueActivity.IssueActivityId == id).first()
+=======
+@router.get("/{item_id}", response_model=schemas.IssueActivityRead, summary="Get Issue Activity by ID")
+def get_issue_activity(
+    item_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user_from_cookie),
+):
+    obj = db.query(models.IssueActivity).filter(models.IssueActivity.IssueActivityId == item_id).first()
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not obj:
         raise HTTPException(status_code=404, detail="IssueActivity not found")
 
@@ -94,9 +108,15 @@ def get_issue_activity(
     return obj
 
 
+<<<<<<< HEAD
 @router.put("/{id}", response_model=schemas.IssueActivityRead, summary="Update Issue Activity")
 def update_issue_activity(
     id: str,
+=======
+@router.put("/{item_id}", response_model=schemas.IssueActivityRead, summary="Update Issue Activity")
+def update_issue_activity(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     payload: schemas.IssueActivityCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
@@ -105,7 +125,11 @@ def update_issue_activity(
     if current_user.role_name not in allowed_roles:
         raise HTTPException(status_code=403, detail="Not authorized to update issue activities")
 
+<<<<<<< HEAD
     obj = db.query(models.IssueActivity).filter(models.IssueActivity.IssueActivityId == id).first()
+=======
+    obj = db.query(models.IssueActivity).filter(models.IssueActivity.IssueActivityId == item_id).first()
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not obj:
         raise HTTPException(status_code=404, detail="IssueActivity not found")
 
@@ -121,6 +145,7 @@ def update_issue_activity(
     db.commit()
     db.refresh(obj)
 
+<<<<<<< HEAD
     crud.audit_log(db, "IssueActivity", obj.IssueActivityId, "Update", changed_by=current_user.UserId)
     return obj
 
@@ -128,6 +153,15 @@ def update_issue_activity(
 @router.patch("/{id}/archive", summary="Archive Issue Activity (not implemented)")
 def archive_issue_activity(
     id: str,
+=======
+    crud.audit_log(db, "IssueActivity", obj.IssueActivityId, "Update", changed_by=current_user.userName)
+    return obj
+
+
+@router.patch("/{item_id}/archive", summary="Archive Issue Activity (not implemented)")
+def archive_issue_activity(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
 ):

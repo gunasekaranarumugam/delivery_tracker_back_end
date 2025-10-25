@@ -31,7 +31,11 @@ def create_item(
 
     existing = db.query(models.EmployeeCertification).filter_by(
         EmployeeId=payload.EmployeeId,
+<<<<<<< HEAD
         EmployeeCertificationId=payload.EmployeeCertificationId
+=======
+        CertificationId=payload.CertificationId
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     ).first()
     if existing:
         raise HTTPException(status_code=400, detail="Employee already has this certification")
@@ -40,8 +44,13 @@ def create_item(
     db.add(obj)
     db.commit()
     db.refresh(obj)
+<<<<<<< HEAD
     print(payload.dict())
     crud.audit_log(db, 'EmployeeCertification', obj.EmployeeCertificationId, 'Create', changed_by=current_user.UserId)
+=======
+
+    crud.audit_log(db, 'EmployeeCertification', obj.EmployeeCertificationId, 'Create', changed_by=current_user.userName)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return obj
 
 @router.get("/", response_model=List[schemas.EmployeeCertificationRead], summary="Get list of Employee Certification records.")
@@ -70,6 +79,7 @@ def list_items(
 
     return q.offset(offset).limit(limit).all()
 
+<<<<<<< HEAD
 @router.get("/{id}", response_model=schemas.EmployeeCertificationRead, summary="Get Employee Certification by ID.")
 def get_item(
     id: str,
@@ -77,6 +87,15 @@ def get_item(
     current_user: models.User = Depends(get_current_user_from_cookie),
 ):
     obj = db.query(models.EmployeeCertification).get(id)
+=======
+@router.get("/{item_id}", response_model=schemas.EmployeeCertificationRead, summary="Get Employee Certification by ID.")
+def get_item(
+    item_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user_from_cookie),
+):
+    obj = db.query(models.EmployeeCertification).get(item_id)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not obj:
         raise HTTPException(status_code=404, detail="Employee Certification not found")
 
@@ -87,9 +106,15 @@ def get_item(
 
     return obj
 
+<<<<<<< HEAD
 @router.put("/{id}", response_model=schemas.EmployeeCertificationRead, summary="Update Employee Certification record.")
 def update_item(
     id: str,
+=======
+@router.put("/{item_id}", response_model=schemas.EmployeeCertificationRead, summary="Update Employee Certification record.")
+def update_item(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     payload: schemas.EmployeeCertificationCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
@@ -97,7 +122,11 @@ def update_item(
     if current_user.role_name not in ["ADMIN", "BU_HEAD"]:
         raise HTTPException(status_code=403, detail="Not authorized to update employee certifications")
 
+<<<<<<< HEAD
     obj = db.query(models.EmployeeCertification).get(id)
+=======
+    obj = db.query(models.EmployeeCertification).get(item_id)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not obj:
         raise HTTPException(status_code=404, detail="Employee Certification not found")
 
@@ -110,6 +139,7 @@ def update_item(
     db.commit()
     db.refresh(obj)
 
+<<<<<<< HEAD
     crud.audit_log(db, 'EmployeeCertification', obj.EmployeeCertificationId, 'Update', changed_by=current_user.UserId)
     return obj
 
@@ -154,4 +184,7 @@ def update_employee_certification_partial(
         'Update (Partial)',
         changed_by=current_user.UserId
     )
+=======
+    crud.audit_log(db, 'EmployeeCertification', obj.EmployeeCertificationId, 'Update', changed_by=current_user.userName)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return obj

@@ -2,7 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List
 import uuid
+<<<<<<< HEAD
 from main import models, schemas, crud
+=======
+
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
 from main.database import get_db
 from main.models import EmployeeCapacity, User, Role  # Assuming Role is an enum or constants
 from main.schemas import EmployeeCapacityCreate, EmployeeCapacityOut, EmployeeCapacityUpdate
@@ -47,6 +51,7 @@ def create_employee_capacity(
     db.refresh(new_capacity)
     return new_capacity
 
+<<<<<<< HEAD
 @router.get("/{id}", response_model=EmployeeCapacityOut)
 def get_employee_capacity(
     id: str,
@@ -54,6 +59,15 @@ def get_employee_capacity(
     current_user: User = Depends(get_current_user_from_cookie),
 ):
     capacity = db.query(EmployeeCapacity).filter(EmployeeCapacity.EmployeeCapacityId == id).first()
+=======
+@router.get("/{employee_capacity_id}", response_model=EmployeeCapacityOut)
+def get_employee_capacity(
+    employee_capacity_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user_from_cookie),
+):
+    capacity = db.query(EmployeeCapacity).filter(EmployeeCapacity.EmployeeCapacityId == employee_capacity_id).first()
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not capacity:
         raise HTTPException(status_code=404, detail="Employee Capacity not found")
 
@@ -61,9 +75,15 @@ def get_employee_capacity(
 
     return capacity
 
+<<<<<<< HEAD
 @router.patch("/{id}", response_model=EmployeeCapacityOut)
 def update_employee_capacity(
     id: str,
+=======
+@router.patch("/{employee_capacity_id}", response_model=EmployeeCapacityOut)
+def update_employee_capacity(
+    employee_capacity_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     data: EmployeeCapacityUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user_from_cookie),
@@ -71,7 +91,11 @@ def update_employee_capacity(
     if current_user.role_name not in ALLOWED_ROLES:
         raise HTTPException(status_code=403, detail="Not authorized to update employee capacity")
 
+<<<<<<< HEAD
     capacity = db.query(EmployeeCapacity).filter(EmployeeCapacity.EmployeeCapacityId == id).first()
+=======
+    capacity = db.query(EmployeeCapacity).filter(EmployeeCapacity.EmployeeCapacityId == employee_capacity_id).first()
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not capacity:
         raise HTTPException(status_code=404, detail="Employee Capacity not found")
 
@@ -98,6 +122,7 @@ def list_employee_capacities(
 
     capacities = query.offset(offset).limit(limit).all()
     return capacities
+<<<<<<< HEAD
 
 @router.put("/{id}", response_model=schemas.EmployeeCapacityRead, summary="Fully update (replace) an Employee Capacity record.")
 def update_employee_capacity_full(
@@ -153,3 +178,5 @@ def update_employee_capacity_full(
     )
     
     return obj
+=======
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef

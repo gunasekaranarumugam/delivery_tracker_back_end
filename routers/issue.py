@@ -45,7 +45,11 @@ def create_issue(
     db.commit()
     db.refresh(issue)
 
+<<<<<<< HEAD
     crud.audit_log(db, "Issue", issue.IssueId, "Create", changed_by=current_user.UserId)
+=======
+    crud.audit_log(db, "Issue", issue.IssueId, "Create", changed_by=current_user.userName)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return issue
 
 
@@ -75,6 +79,7 @@ def list_issues(
     return query.offset(offset).limit(limit).all()
 
 
+<<<<<<< HEAD
 @router.get("/{id}", response_model=schemas.IssueRead, summary="Get Issue by ID")
 def get_issue(
     id: str,
@@ -82,6 +87,15 @@ def get_issue(
     current_user: models.User = Depends(get_current_user_from_cookie),
 ):
     issue = db.query(models.Issue).filter(models.Issue.IssueId == id).first()
+=======
+@router.get("/{item_id}", response_model=schemas.IssueRead, summary="Get Issue by ID")
+def get_issue(
+    item_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user_from_cookie),
+):
+    issue = db.query(models.Issue).filter(models.Issue.IssueId == item_id).first()
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not issue:
         raise HTTPException(status_code=404, detail="Issue not found")
 
@@ -94,9 +108,15 @@ def get_issue(
     return issue
 
 
+<<<<<<< HEAD
 @router.put("/{id}", response_model=schemas.IssueRead, summary="Update Issue")
 def update_issue(
     id: str,
+=======
+@router.put("/{item_id}", response_model=schemas.IssueRead, summary="Update Issue")
+def update_issue(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     payload: schemas.IssueCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
@@ -105,7 +125,11 @@ def update_issue(
     if current_user.role_name not in [models.Role.BU_HEAD, models.Role.PROJECT_MANAGER]:
         raise HTTPException(status_code=403, detail="Not authorized to update issues")
 
+<<<<<<< HEAD
     issue = db.query(models.Issue).filter(models.Issue.IssueId == id).first()
+=======
+    issue = db.query(models.Issue).filter(models.Issue.IssueId == item_id).first()
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not issue:
         raise HTTPException(status_code=404, detail="Issue not found")
 
@@ -121,6 +145,7 @@ def update_issue(
     db.commit()
     db.refresh(issue)
 
+<<<<<<< HEAD
     crud.audit_log(db, "Issue", issue.IssueId, "Update", changed_by=current_user.UserId)
     return issue
 
@@ -128,6 +153,15 @@ def update_issue(
 @router.patch("/{id}/archive", summary="Archive Issue")
 def archive_issue(
     id: str,
+=======
+    crud.audit_log(db, "Issue", issue.IssueId, "Update", changed_by=current_user.userName)
+    return issue
+
+
+@router.patch("/{item_id}/archive", summary="Archive Issue")
+def archive_issue(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
 ):
@@ -135,7 +169,11 @@ def archive_issue(
     if current_user.role_name not in [models.Role.BU_HEAD, models.Role.PROJECT_MANAGER]:
         raise HTTPException(status_code=403, detail="Not authorized to archive issues")
 
+<<<<<<< HEAD
     issue = db.query(models.Issue).filter(models.Issue.IssueId == id).first()
+=======
+    issue = db.query(models.Issue).filter(models.Issue.IssueId == item_id).first()
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not issue:
         raise HTTPException(status_code=404, detail="Issue not found")
 
@@ -149,5 +187,9 @@ def archive_issue(
     issue.UpdatedAt = datetime.utcnow()
     db.commit()
 
+<<<<<<< HEAD
     crud.audit_log(db, "Issue", issue.IssueId, "Archive", changed_by=current_user.UserId)
+=======
+    crud.audit_log(db, "Issue", issue.IssueId, "Archive", changed_by=current_user.userName)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return {"status": "archived"}

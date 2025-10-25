@@ -1,5 +1,5 @@
-
-"""from sqlalchemy import create_engine
+"""
+from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -18,41 +18,20 @@ def get_db():
     try:
         yield db
     finally:
-        db.close()"""
+        db.close()
+"""
 
-<<<<<<< HEAD
-# main/database.py
-
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from main.models import Base  # ✅ Use the same Base from your models
-
-# --- MySQL connection details ---
-=======
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # --- Replace this section for MySQL ---
 # Define your database credentials
->>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
 db_user = "admin"
 db_password = "TBs7~T:|k2pXg~cY(JbgW9jsKhYj"
 db_host = "delivery-tracker-data.cw3uwuiqequv.us-east-1.rds.amazonaws.com"  # e.g., "localhost" or a server IP
 db_name = "delivery_tracker"
 
-<<<<<<< HEAD
-# Construct the database URL
-SQLALCHEMY_DATABASE_URL = f"mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}"
-
-# Create SQLAlchemy engine and session
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# ✅ DO NOT redefine Base here — it comes from models
-
-# Dependency for FastAPI routes
-=======
 # Construct the MySQL database URL
 # The format is: "dialect+driver://username:password@host/dbname"
 SQLALCHEMY_DATABASE_URL = f"mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}"
@@ -64,15 +43,11 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 # Dependency
->>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
-<<<<<<< HEAD
-=======
 
 print(get_db)
->>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef

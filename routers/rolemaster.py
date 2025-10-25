@@ -55,7 +55,11 @@ def create_item(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
 ):
+<<<<<<< HEAD
     check_permission(current_user, ["ADMIN", "BU HEAD"])
+=======
+    check_permission(current_user, ["Admin", "BU Head"])
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
 
     # Check duplicate RoleId
     existing_role_id = db.query(models.RoleMaster).filter_by(RoleId=payload.RoleId).first()
@@ -74,7 +78,11 @@ def create_item(
     db.commit()
     db.refresh(obj)
 
+<<<<<<< HEAD
     crud.audit_log(db, 'RoleMaster', obj.RoleId, 'Create',changed_by=current_user.UserId)
+=======
+    crud.audit_log(db, 'RoleMaster', obj.RoleId, 'Create', changed_by=current_user.userName)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return obj
 
 
@@ -90,9 +98,15 @@ def list_items(
     return query.offset(offset).limit(limit).all()
 
 
+<<<<<<< HEAD
 @router.get("/{id}", response_model=schemas.RoleMasterRead, summary="Get RoleMaster by ID.")
 def get_item(
     id: str,
+=======
+@router.get("/{item_id}", response_model=schemas.RoleMasterRead, summary="Get RoleMaster by ID.")
+def get_item(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
 ):
@@ -102,6 +116,7 @@ def get_item(
     return obj
 
 
+<<<<<<< HEAD
 
 @router.patch("/{id}", response_model=schemas.RoleMasterRead, summary="Partially update a Role Master record.")
 def update_role_master_partial(
@@ -155,6 +170,11 @@ def update_role_master_partial(
 @router.put("/{id}", response_model=schemas.RoleMasterRead, summary="Update RoleMaster record.")
 def update_item(
     id: str,
+=======
+@router.put("/{item_id}", response_model=schemas.RoleMasterRead, summary="Update RoleMaster record.")
+def update_item(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     payload: schemas.RoleMasterCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
@@ -171,5 +191,9 @@ def update_item(
     db.commit()
     db.refresh(obj)
 
+<<<<<<< HEAD
     crud.audit_log(db, 'RoleMaster', obj.RoleId, 'Update', changed_by=current_user.UserId)
+=======
+    crud.audit_log(db, 'RoleMaster', obj.RoleId, 'Update', changed_by=current_user.userName)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return obj

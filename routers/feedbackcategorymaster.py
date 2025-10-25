@@ -58,7 +58,11 @@ def create_item(
     db.commit()
     db.refresh(obj)
 
+<<<<<<< HEAD
     crud.audit_log(db, 'FeedbackCategoryMaster', obj.FeedbackCategoryId, 'Create', changed_by=current_user.UserId)
+=======
+    crud.audit_log(db, 'FeedbackCategoryMaster', obj.FeedbackCategoryId, 'Create', changed_by=current_user.userName)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return obj
 
 @router.get("/", response_model=List[schemas.FeedbackCategoryMasterRead], summary="Get list of Feedback Category records.")
@@ -74,16 +78,26 @@ def list_items(
     q = db.query(models.FeedbackCategoryMaster)
     return q.offset(offset).limit(limit).all()
 
+<<<<<<< HEAD
 @router.get("/{id}", response_model=schemas.FeedbackCategoryMasterRead, summary="Get Feedback Category by ID.")
 def get_item(
     id: str,
+=======
+@router.get("/{item_id}", response_model=schemas.FeedbackCategoryMasterRead, summary="Get Feedback Category by ID.")
+def get_item(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
 ):
     if current_user.role_name in ['DEVELOPER', 'TEAM MEMBER', 'DELIVERY MANAGER']:
         raise HTTPException(status_code=403, detail="Not authorized to view feedback categories")
 
+<<<<<<< HEAD
     obj = db.query(models.FeedbackCategoryMaster).get(id)
+=======
+    obj = db.query(models.FeedbackCategoryMaster).get(item_id)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not obj:
         raise HTTPException(status_code=404, detail="Feedback Category not found")
     return obj
@@ -107,6 +121,7 @@ def update_item(
     db.commit()
     db.refresh(obj)
 
+<<<<<<< HEAD
     crud.audit_log(db, 'FeedbackCategoryMaster', obj.FeedbackCategoryId, 'Update', changed_by=current_user.UserId)
     return obj
 
@@ -156,4 +171,7 @@ def update_feedback_category_master_partial(
         changed_by=current_user.UserId 
     )
     
+=======
+    crud.audit_log(db, 'FeedbackCategoryMaster', obj.FeedbackCategoryId, 'Update', changed_by=current_user.userName)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return obj

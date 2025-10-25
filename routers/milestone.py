@@ -40,7 +40,11 @@ def create_milestone(
     db.commit()
     db.refresh(milestone)
 
+<<<<<<< HEAD
     crud.audit_log(db, "Milestone", milestone.MilestoneId, "Create",changed_by=current_user.UserId)
+=======
+    crud.audit_log(db, "Milestone", milestone.MilestoneId, "Create")
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return milestone
 
 
@@ -69,6 +73,7 @@ def list_milestones(
     return query.offset(offset).limit(limit).all()
 
 
+<<<<<<< HEAD
 @router.get("/{id}", response_model=schemas.MilestoneRead, summary="Get milestone by ID")
 def get_milestone(
     id: str,
@@ -76,6 +81,15 @@ def get_milestone(
     current_user: models.User = Depends(get_current_user_from_cookie),
 ):
     milestone = db.query(models.Milestone).filter(models.Milestone.MilestoneId == id).first()
+=======
+@router.get("/{item_id}", response_model=schemas.MilestoneRead, summary="Get milestone by ID")
+def get_milestone(
+    item_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user_from_cookie),
+):
+    milestone = db.query(models.Milestone).filter(models.Milestone.MilestoneId == item_id).first()
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not milestone:
         raise HTTPException(status_code=404, detail="Milestone not found")
 
@@ -87,9 +101,15 @@ def get_milestone(
     return milestone
 
 
+<<<<<<< HEAD
 @router.put("/{id}", response_model=schemas.MilestoneRead, summary="Update Milestone")
 def update_milestone(
     id: str,
+=======
+@router.put("/{item_id}", response_model=schemas.MilestoneRead, summary="Update Milestone")
+def update_milestone(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     payload: schemas.MilestoneCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
@@ -97,7 +117,11 @@ def update_milestone(
     if current_user.role_name not in [models.Role.BU_HEAD, models.Role.PROJECT_MANAGER]:
         raise HTTPException(status_code=403, detail="Not authorized to update milestones")
 
+<<<<<<< HEAD
     milestone = db.query(models.Milestone).filter(models.Milestone.MilestoneId == id).first()
+=======
+    milestone = db.query(models.Milestone).filter(models.Milestone.MilestoneId == item_id).first()
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not milestone:
         raise HTTPException(status_code=404, detail="Milestone not found")
 
@@ -111,6 +135,7 @@ def update_milestone(
     db.commit()
     db.refresh(milestone)
 
+<<<<<<< HEAD
     crud.audit_log(db, "Milestone", milestone.MilestoneId, "Update", changed_by=current_user.UserId)
     return milestone
 
@@ -118,13 +143,26 @@ def update_milestone(
 @router.patch("/{id}/archive", summary="Archive Milestone")
 def archive_milestone(
     id: str,
+=======
+    crud.audit_log(db, "Milestone", milestone.MilestoneId, "Update", changed_by=current_user.userName)
+    return milestone
+
+
+@router.patch("/{item_id}/archive", summary="Archive Milestone")
+def archive_milestone(
+    item_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
 ):
     if current_user.role_name not in [models.Role.BU_HEAD, models.Role.PROJECT_MANAGER]:
         raise HTTPException(status_code=403, detail="Not authorized to archive milestones")
 
+<<<<<<< HEAD
     milestone = db.query(models.Milestone).filter(models.Milestone.MilestoneId == id).first()
+=======
+    milestone = db.query(models.Milestone).filter(models.Milestone.MilestoneId == item_id).first()
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not milestone:
         raise HTTPException(status_code=404, detail="Milestone not found")
 
@@ -136,5 +174,9 @@ def archive_milestone(
     milestone.UpdatedAt = datetime.utcnow()
     db.commit()
 
+<<<<<<< HEAD
     crud.audit_log(db, "Milestone", milestone.MilestoneId, "Archive", changed_by=current_user.UserId)
+=======
+    crud.audit_log(db, "Milestone", milestone.MilestoneId, "Archive", changed_by=current_user.userName)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return {"status": "archived"}

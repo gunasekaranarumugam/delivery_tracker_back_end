@@ -1,17 +1,27 @@
 from fastapi import FastAPI
+<<<<<<< HEAD
 from main.database import engine
+=======
+from main.database import Base, engine
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
 from routers import ( 
     user, businessunit, project, deliverable, holidaycalendar,
     rolemaster, employee, employeerole,
     certificationmaster, employeecertification,
     skillmaster, tasktypemaster, task, taskskillrequirement,
     feedbackcategorymaster, review, reviewdiscussionthread, reviewdiscussioncomment,daily_status,
+<<<<<<< HEAD
     auditlog, milestone, issue, issue_activity, delivery_rating, employee_capacity, employee_leave,rating_attribute_master,holiday,employee_skill
 )
 
 from main import models  
 
 from main.models import Base
+=======
+    auditlog, milestone, issue, issue_activity, delivery_rating, employee_capacity, employee_leave,rating_attribute_master
+)
+
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
 
 
 
@@ -24,12 +34,18 @@ openapi_tags = [
     {"name": "BusinessUnit", "description": "Manage business units"},
     {"name": "Project", "description": "Create and manage projects"},
     {"name": "Deliverable", "description": "Track project deliverables"},
+<<<<<<< HEAD
     {"name": "Holiday","description":"Holidays for employees"},
     {"name": "HolidayCalendar", "description": "Manage holiday calendar"},
     {"name": "RoleMaster", "description": "User role definitions"},
     {"name": "Employee", "description": "Manage employee records"},
     {"name": "EmployeeRole", "description": "Manage employee with their roles"},
     {"name": "EmployeeSkill","description":"Manage employee with thier skills"},
+=======
+    {"name": "HolidayCalendar", "description": "Manage holiday calendar"},
+    {"name": "RoleMaster", "description": "User role definitions"},
+    {"name": "Employee", "description": "Manage employee records"},
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     {"name": "CertificationMaster", "description": "Manage certification types"},
     {"name": "EmployeeCertification", "description": "Assign certifications to employees"},
     {"name": "SkillMaster", "description": "Define and manage skills"},
@@ -50,7 +66,10 @@ openapi_tags = [
     {"name":"RatingAttributeMaster","description":"Rating of the delivery rating"},
     {"name":"DailyStatus","description":"Status of employee they are working on task"},
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
 ]
 
 
@@ -65,18 +84,29 @@ app = FastAPI(
 
 # Include routers with matching tags
 app.include_router(user.router,prefix="/user",tags=["User"])
+<<<<<<< HEAD
 app.include_router(businessunit.router, prefix="/api/BusinessUnit", tags=["BusinessUnit"])
+=======
+app.include_router(businessunit.router, prefix="/api/Business", tags=["BusinessUnit"])
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
 app.include_router(project.router, prefix="/api/Projects", tags=["Project"])
 app.include_router(milestone.router, prefix="/api/Milestones", tags=["Milestone"])
 app.include_router(deliverable.router, prefix="/api/Deliverables", tags=["Deliverable"])
 app.include_router(issue.router, prefix="/api/Issues", tags=["Issue"])
 app.include_router(issue_activity.router, prefix="/api/IssueActivities", tags=["IssueActivity"])
+<<<<<<< HEAD
 app.include_router(holidaycalendar.router, prefix="/api/HolidayCalendars", tags=["HolidayCalendar"])
 app.include_router(holiday.router,prefix="/api/Holidays", tags=["Holiday"]),
 app.include_router(rolemaster.router, prefix="/api/Roles", tags=["RoleMaster"])
 app.include_router(employee.router, prefix="/api/Employees", tags=["Employee"])
 app.include_router(employeerole.router, prefix="/api/EmployeeRoles", tags=["EmployeeRole"])
 app.include_router(employee_skill.router, prefix="/api/EmployeeSkills", tags=["EmployeeSkill"])
+=======
+app.include_router(holidaycalendar.router, prefix="/api/Holidays", tags=["HolidayCalendar"])
+app.include_router(rolemaster.router, prefix="/api/Roles", tags=["RoleMaster"])
+app.include_router(employee.router, prefix="/api/Employees", tags=["Employee"])
+#app.include_router(employeerole.router, prefix="/api/Employee-Roles", tags=["EmployeeRole"])
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
 app.include_router(certificationmaster.router, prefix="/api/Certifications", tags=["CertificationMaster"])
 app.include_router(employeecertification.router, prefix="/api/Employee-Certifications", tags=["EmployeeCertification"])
 app.include_router(skillmaster.router, prefix="/api/Skills", tags=["SkillMaster"])
@@ -90,10 +120,17 @@ app.include_router(reviewdiscussioncomment.router, prefix="/api/Review-Comments"
 app.include_router(delivery_rating.router, prefix="/api/DeliveryRatings", tags=["DeliveryRating"])
 app.include_router(employee_capacity.router, prefix="/api/EmployeeCapacities", tags=["EmployeeCapacity"])
 app.include_router(employee_leave.router, prefix="/api/EmployeeLeaves", tags=["EmployeeLeave"])
+<<<<<<< HEAD
 app.include_router(auditlog.router, prefix="/api/Audit", tags=["AuditLog"])
 app.include_router(daily_status.router,prefix="/api/DailyStatus",tags=["DailyStatus"])
 app.include_router(rating_attribute_master.router,prefix="/api/RatingAttributeMaster",tags=["RatingAttributeMaster"])
 
+=======
+#app.include_router(delivery_rating.router, prefix="/api/Delivery-Ratings", tags=["DeliveryRating"])
+app.include_router(auditlog.router, prefix="/api/Audit", tags=["AuditLog"])
+app.include_router(daily_status.router,prefix="/api/DailyStatus",tags=["DailyStatus"])
+app.include_router(rating_attribute_master.router,prefix="/api/RatingAttributeMaster",tags=["RatingAttributeMaster"])
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
 # Root endpoint
 @app.get("/")
 def root():

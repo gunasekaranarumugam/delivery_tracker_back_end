@@ -37,7 +37,11 @@ def create_employee(
 
     # Validate HolidayCalendar if provided
     if payload.HolidayCalendarId:
+<<<<<<< HEAD
         calendar = db.query(models.HolidayCalendar).filter_by(HolidayCalendarId=payload.HolidayCalendarId).first()
+=======
+        calendar = db.query(models.HolidayCalendar).filter_by(HolidayId=payload.HolidayCalendarId).first()
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
         if not calendar:
             raise HTTPException(status_code=400, detail="Invalid HolidayCalendarId")
 
@@ -49,7 +53,11 @@ def create_employee(
     db.add(obj)
     db.commit()
     db.refresh(obj)
+<<<<<<< HEAD
     crud.audit_log(db, 'Employee', getattr(obj, 'EmployeeId'), 'Create', changed_by=current_user.UserId)
+=======
+    crud.audit_log(db, 'Employee', getattr(obj, 'EmployeeId'), 'Create', changed_by=current_user.userName)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     return obj
 
 
@@ -113,6 +121,7 @@ def list_employees(
     return q.offset(offset).limit(limit).all()
 
 
+<<<<<<< HEAD
 @router.get("/{id}", response_model=schemas.EmployeeRead, summary="Get Employee by ID.")
 def get_employee(
     id: str,
@@ -120,6 +129,15 @@ def get_employee(
     current_user: models.User = Depends(get_current_user_from_cookie),
 ):
     obj = db.query(models.Employee).get(id)
+=======
+@router.get("/{employee_id}", response_model=schemas.EmployeeRead, summary="Get Employee by ID.")
+def get_employee(
+    employee_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user_from_cookie),
+):
+    obj = db.query(models.Employee).get(employee_id)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not obj:
         raise HTTPException(status_code=404, detail="Employee not found")
 
@@ -159,9 +177,15 @@ def get_employee(
     return obj
 
 
+<<<<<<< HEAD
 @router.put("/{id}", response_model=schemas.EmployeeRead, summary="Update Employee record.")
 def update_employee(
     id: str,
+=======
+@router.put("/{employee_id}", response_model=schemas.EmployeeRead, summary="Update Employee record.")
+def update_employee(
+    employee_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     payload: schemas.EmployeeCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
@@ -169,7 +193,11 @@ def update_employee(
     if current_user.role_name not in [ADMIN, BU_HEAD]:
         raise HTTPException(status_code=403, detail="Not authorized to update employee")
 
+<<<<<<< HEAD
     obj = db.query(models.Employee).get(id)
+=======
+    obj = db.query(models.Employee).get(employee_id)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not obj:
         raise HTTPException(status_code=404, detail="Employee not found")
 
@@ -186,16 +214,26 @@ def update_employee(
     return obj
 
 
+<<<<<<< HEAD
 @router.patch("/{id}/archive", summary="Archive Employee record.")
 def archive_employee(
     id: str,
+=======
+@router.patch("/{employee_id}/archive", summary="Archive Employee record.")
+def archive_employee(
+    employee_id: str,
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie),
 ):
     if current_user.role_name not in [ADMIN, BU_HEAD]:
         raise HTTPException(status_code=403, detail="Not authorized to archive employee")
 
+<<<<<<< HEAD
     obj = db.query(models.Employee).get(id)
+=======
+    obj = db.query(models.Employee).get(employee_id)
+>>>>>>> da84f6c29baf1e41d41f4bbd83db02afe97cd3ef
     if not obj:
         raise HTTPException(status_code=404, detail="Employee not found")
 
