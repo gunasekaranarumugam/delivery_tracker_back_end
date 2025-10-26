@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from main.database import engine
 from routers import ( 
-    user, businessunit, project, deliverable, holidaycalendar,
+    businessunit, project, deliverable, holidaycalendar,
     rolemaster, employee, employeerole,
     certificationmaster, employeecertification,
     skillmaster, tasktypemaster, task, taskskillrequirement,
@@ -9,9 +9,7 @@ from routers import (
     auditlog, milestone, issue, issue_activity, delivery_rating, employee_capacity, employee_leave,rating_attribute_master,holiday,employee_skill
 )
 
-from main import models  
-
-from main.models import Base
+from main import models
 
 openapi_tags = [
     {"name": "BusinessUnit", "description": "Manage business units"},
