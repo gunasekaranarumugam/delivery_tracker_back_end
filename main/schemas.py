@@ -289,17 +289,16 @@ class TaskTypeMasterRead(TaskTypeMasterBase):
 # =====================================================
 # === Task Status Schemas ===
 # =====================================================
-
+   
 class TaskStatusBase(BaseModel):
-    DailyStatusId: str = Field(..., example="DS-001")
-    TaskId: str = Field(..., example="TASK-001")
-    EmployeeId: Optional[str] = Field(None, example="EMP-001")
-    WorkDate: date
-    HoursSpent: Optional[float] = None
-    Progress: Optional[float] = None
-    Remarks: Optional[str] = None
-    CreatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-    UpdatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
+    task_status_id: str = Field(..., example="TS-001")
+    task_id: str = Field(..., example="TASK-001")
+    action_date: date
+    hours_spent: Optional[float] = None
+    progress: Optional[float] = None
+    remarks: Optional[str] = None
+    created_at: datetime = Field(default_factory=utcnow) # Removed Optional[]
+    created_by: str = Field(..., example="EMP-001")
 
 class DailyStatusCreate(DailyStatusBase):
     pass
