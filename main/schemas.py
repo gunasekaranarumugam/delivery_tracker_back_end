@@ -294,23 +294,35 @@ class TaskStatusBase(BaseModel):
     task_status_id: str = Field(..., example="TS-001")
     task_id: str = Field(..., example="TASK-001")
     action_date: date
-    hours_spent: Optional[float] = None
-    progress: Optional[float] = None
-    remarks: Optional[str] = None
-    created_at: datetime = Field(default_factory=utcnow) # Removed Optional[]
+    hours_spent: str = Field(..., example="4.5")
+    progress: str = Field(..., example="20%")
+    remarks: str = Field(..., example="REMARKS-001")
+    created_at: datetime = Field(default_factory=now)
     created_by: str = Field(..., example="EMP-001")
 
-class DailyStatusCreate(DailyStatusBase):
-    pass
+class TaskStatusCreate(BaseModel):
+    task_status_id: str = Field(..., example="TS-001")
+    task_id: str = Field(..., example="TASK-001")
+    action_date: date
+    hours_spent: str = Field(..., example="4.5")
+    progress: str = Field(..., example="20%")
+    remarks: str = Field(..., example="REMARKS-001")
+    created_at: datetime = Field(default_factory=now)
+    created_by: str = Field(..., example="EMP-001")
 
 class DailyStatusUpdate(BaseModel):
-    HoursSpent: Optional[float] = None
-    Progress: Optional[float] = None
-    Remarks: Optional[str] = None
-    UpdatedAt: datetime = Field(default_factory=utcnow)
+    task_status_id: str = Field(..., example="TS-001")
+    task_id: str = Field(..., example="TASK-001")
+    action_date: date
+    hours_spent: str = Field(..., example="4.5")
+    progress: str = Field(..., example="20%")
+    remarks: str = Field(..., example="REMARKS-001")
+    updated_at: datetime = Field(default_factory=now)
+    updated_by: str = Field(..., example="EMP-001")
+    entity_status: str = Field(..., example="Active")
 
 class DailyStatusRead(DailyStatusBase):
-    model_config = ConfigDict(from_attributes=True) # ✅ Pydantic V2 FIX
+    model_config = ConfigDict(from_attributes=True)
 
 # =====================================================
 # === Issue Schemas ===
