@@ -28,7 +28,6 @@ from main import models
 from datetime import datetime
 from sqlalchemy.orm import Session
 
-
 def audit_log(
     db: Session,
     table_name: str,
