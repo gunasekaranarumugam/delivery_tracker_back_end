@@ -15,90 +15,37 @@ def now():
 # Core Models and Relationships
 # ----------------------------------------------------------------------
 
-# NOTE: The provided 'User' model (snake_case) is different from the existing one.
-# I am using the snake_case one and ensuring it inherits from Base.
-class User(Base):
-    __tablename__ = "user"
-    user_id = Column(String(50),primary_key=True,index=True)
-    full_name = Column(String(200))
-    email_address = Column(String(200))
-    password = Column(String(200))
-    entity_status = Column(String(50), default="Active")
-    created_at = Column(DateTime, default=now)
-    updated_at = Column(DateTime, default=now)
-    # Self-referencing FK to the user_id of the same table
-    created_by = Column(String(50))
-
-
-class RoleMaster(Base):
-    __tablename__ = "role_master"
-    RoleId = Column(String(50), primary_key=True, index=True)
-    RoleName = Column(String(200))
-    Description = Column(String(200))
-    CreatedAt = Column(DateTime, default=now)
-    UpdatedAt = Column(DateTime, default=now)
-    
-    # Relationship back to EmployeeRole
-    employee_links = relationship("EmployeeRole", back_populates="role")
-
-
-class Employee(Base):
-    __tablename__ = "employee"
-    EmployeeId = Column(String(50), primary_key=True, index=True)
-    FullName = Column(String(200))
-    Email = Column(String(200), index=True)
-    # NOTE: Assuming BusinessUnit's PK is 'business_unit_id' (from the new definition)
-    BUId = Column(String(50), ForeignKey('business_unit.business_unit_id'), nullable=True) 
-    Status = Column(String(50), default="Active")
-    HolidayCalendarId = Column(String(50), ForeignKey("holidaycalendar.HolidayCalendarId"), nullable=True)
-    CreatedAt = Column(DateTime, default=now)
-    UpdatedAt = Column(DateTime, default=now)
-
-    # RELATIONSHIP: Link Employee to EmployeeRole (allows filtering for the active role)
-    roles_link = relationship(
-        "EmployeeRole", 
-        back_populates="employee_ref", 
-        lazy="dynamic",
-        primaryjoin="Employee.EmployeeId == EmployeeRole.EmployeeId"
-    )
-    
-    @property
-    def current_role_name(self):
-        active_role_link = self.roles_link.filter(
-            EmployeeRole.Active == True,
-            EmployeeRole.EntityStatus == "Active"
-        ).first()
-
-        if active_role_link and active_role_link.role:
-            return active_role_link.role.RoleName
-        return None
-
 class EmployeeRole(Base):
     __tablename__ = "employee_role"
-    EmployeeRoleId = Column(String(50), primary_key=True, index=True)
-    EmployeeId = Column(String(50), ForeignKey('employee.EmployeeId'))
-    RoleId = Column(String(50), ForeignKey('role_master.RoleId'))
-    Active = Column(Boolean, default=True)
-    AssignedDate = Column(Date)
-    EntityStatus = Column(String(50), default="Active")
-    CreatedAt = Column(DateTime, default=now)
-    UpdatedAt = Column(DateTime, default=now)
-
-    # RELATIONSHIP: Back-reference to Employee (for Employee.roles_link)
-    employee_ref = relationship("Employee", back_populates="roles_link", lazy=False,
-                                 primaryjoin="Employee.EmployeeId == EmployeeRole.EmployeeId")
+    employee_role_id = Column(String(10), primary_key=True, index=True)
+    employee_role_name = Column(String(100))
+    employee_role_description = Column(String(4000))
+    created_at = Column(DateTime, default=now)
+    created_by = Column(String(10))
+    updated_at = Column(DateTime, default=now)
+    updated_by = Column(String(10))
+    entity_status = Column(String(10))
     
-    # RELATIONSHIP: Link to RoleMaster (for getting the actual RoleName)
-    role = relationship("RoleMaster", back_populates="employee_links")
-
+class Employee(Base):
+    __tablename__ = "employee"
+    employee_id = Column(String(10), primary_key=True, index=True)
+    employee_full_name = Column(String(100))
+    employee_email_address = Column(String(100))
+    password = Column(String(100))
+    business_unit_id = Column(String(10)) 
+    holiday_calendar_id = Column(String(10)) 
+    created_at = Column(DateTime, default=now)
+    created_by = Column(String(10))
+    updated_at = Column(DateTime, default=now)
+    updated_by = Column(String(10))
+    entity_status = Column(String(10))
+    
 # ----------------------------------------------------------------------
-# Business Unit and Project Models (Using new snake_case versions)
+# Business Unit and Project Models
 # ----------------------------------------------------------------------
 
-# Using the new, cleaner snake_case definition for BusinessUnit
 class BusinessUnit(Base):
     __tablename__ = "business_unit"
-
     business_unit_id = Column(String(50), primary_key=True, index=True)
     business_unit_name = Column(String(200))
     # FK must refer to 'EmployeeId' as defined in the Employee class
@@ -113,7 +60,6 @@ class BusinessUnit(Base):
 # Using the new, cleaner snake_case definition for Project
 class Project(Base):
     __tablename__ = "project"
-
     project_id = Column(String(50),primary_key=True,index=True)
     business_unit_id = Column(String(50),ForeignKey('business_unit.business_unit_id'))
     project_name = Column(String(200))
@@ -134,7 +80,6 @@ class Project(Base):
 # Using the new, cleaner snake_case definition for Deliverable
 class Deliverable(Base): 
     __tablename__ = "deliverable"
-
     deliverable_id = Column(String(50),primary_key=True,index=True)
     project_id = Column(String(50),ForeignKey("project.project_id"))
     deliverbale_name = Column(String(50)) # Note: Typo 'deliverbale' in your input kept here
@@ -281,7 +226,6 @@ class ReviewDiscussionComment(Base):
 # Using the new, cleaner snake_case definition for AuditLog
 class AuditLog(Base): 
     __tablename__ = "audit_log"
-
     audit_id = Column(String(80), primary_key=True, index=True)
     entity_type = Column(String(200))
     entity_id = Column(String(200))
@@ -299,7 +243,6 @@ class AuditLog(Base):
 
 class DailyStatus(Base):
     __tablename__ = "dailystatus"
-
     DailyStatusId = Column(String(50), primary_key=True, index=True)
     TaskId = Column(String(50),ForeignKey('task.task_id'),nullable=False)
     EmployeeId = Column(String(50), ForeignKey("employee.EmployeeId"), nullable=True, index=True)
