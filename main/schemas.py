@@ -377,16 +377,15 @@ class IssueActivityRead(IssueActivityBase):
 # =====================================================
 
 class AuditLogBase(BaseModel):
-    # Mapping to AuditLog model: audit_id, entity_type, entity_id, etc.
     audit_id: str = Field(..., example="AUD-001")
     entity_type: str = Field(..., example="Task")
     entity_id: str = Field(..., example="TASK-001")
     action: str = Field(..., example="Update")
-    field_changed: Optional[str] = None
-    old_value: Optional[str] = None
-    new_value: Optional[str] = None
-    changed_by: Optional[str] = Field(None, example="EMP-002")
-    createdat: datetime = Field(default_factory=utcnow)
+    field_changed: str = Field(..., example="Task Name")
+    old_value: str = Field(..., example="Task 1")
+    new_value: str = Field(..., example="Task 1B")
+    changed_at: datetime = Field(default_factory=now)
+    changed_by: str = Field(..., example="EMP-001")
 
 class AuditLogCreate(AuditLogBase):
     pass
