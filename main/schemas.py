@@ -7,103 +7,101 @@ from datetime import datetime, date
 def utcnow():
     return datetime.utcnow()
 
-
 # =====================================================
-# === User Schemas ===
+# === Employee Schemas ===
 # =====================================================
 
-class UserBase(BaseModel):
-    # Mapping to User model: user_id, full_name, email_address, password
-    user_id: str = Field(..., example="USR-001")
-    full_name: Optional[str] = Field(None, example="John Doe") # Assuming full_name in model
-    email_address: EmailStr = Field(..., example="john.doe@example.com") 
-    password: str = Field(..., example="Secure@123")
-    entitystatus: Optional[str] = Field("Active", example="Active")
-    created_by: Optional[str] = Field("USER-001")
-    createdat: datetime = Field(default_factory=utcnow)
-    updatedat: datetime = Field(default_factory=utcnow)
+class EmployeeBase(BaseModel):
+    employee_id: str = Field(..., example="EMP-001")
+    employee_full_name: str = Field(..., example="John Doe")
+    employee_email_address: str = Field(..., example="john.doe@example.com") 
+    password: str = Field(..., example="Secure@123") 
+    business_unit_id: str = Field(..., example="BU-001") 
+    holiday_calendar_id: str = Field(..., example="CAL-001")
+    created_at: datetime = Field(default_factory=utcnow)
+    created_by: str = Field(..., example="EMP-001")
+    updated_at: datetime = Field(default_factory=utcnow)
+    updated_by: str = Field(..., example="EMP-001")
+    entity_status: str = Field(..., example="Active")
 
+class EmployeeRegister(BaseModel):
+    employee_full_name: str = Field(..., example="John Doe")
+    employee_email_address: str = Field(..., example="john.doe@example.com") 
+    password: str = Field(..., example="Secure@123") 
+    business_unit_id: str = Field(..., example="BU-001") 
+    holiday_calendar_id: str = Field(..., example="CAL-001")
 
-class UserRegister(BaseModel):
-    full_name: str = Field(..., example="John Doe")
-    email_address: EmailStr = Field(..., example="john.doe@example.com")
-    password: str = Field(..., example="Secure@123")
-
-
-class UserLogin(BaseModel):
-    email_address: EmailStr
+class EmployeeLogin(BaseModel):
+    employee_email_address: str
     password: str
 
-# -------------------- RESPONSE SCHEMAS --------------------
-
-class UserRead(BaseModel):
+class EmployeeRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
-    user_id: str
-    created_by: Optional[str]
-    full_name: Optional[str]
-    email_address: Optional[EmailStr]
-    entitystatus: Optional[str]
-    createdat: datetime
-    updatedat: datetime
-
-
-class UserLoginResponse(BaseModel):
-    user_id: str
-    full_name: Optional[str]
-    email_address: Optional[EmailStr]
-    authToken: str
-
-
-class UserCreate(UserBase):
-    """Schema used for creating a new user."""
-    pass
-
+    employee_id: str
+    employee_full_name: str
+    employee_email_address: str
+    business_unit_id: str
+    holiday_calendar_id: str
+    created_at: datetime
+    created_by: str
+    updated_at: datetime
+    updated_by: str
+    entity_status: str
+    
+class EmployeeLoginResponse(BaseModel):
+    employee_id: str
+    employee_full_name: str
+    employee_email_address: str
+    auth_token: str
 
 # =====================================================
 # === Business Unit Schemas ===
 # =====================================================
+
 class BusinessUnitBase(BaseModel):
-    # Mapping to BusinessUnit model: business_unit_id, business_unit_name, etc.
     business_unit_id: str = Field(..., example="BU-001")
     business_unit_name: str = Field(..., example="Analytics BU")
     business_unit_head_id: str = Field(..., example="EMP-001")
-    business_unit_description: Optional[str] = None
-    entitystatus: Optional[str] = "Active"
-    createdat: datetime = Field(default_factory=utcnow)
-    updatedat: datetime = Field(default_factory=utcnow)
-    createdby: Optional[str] = Field(None, example="USR-001")
-
+    business_unit_description: str = Field(..., example="Analytics BU")
+    created_at: datetime = Field(default_factory=utcnow)
+    created_by: str = Field(..., example="EMP-001")
+    updated_at: datetime = Field(default_factory=utcnow)
+    updated_by: str = Field(..., example="EMP-001")
+    entity_status: str = Field(..., example="Active")
 
 class BusinessUnitCreate(BaseModel):
     business_unit_id: str = Field(..., example="BU-001")
     business_unit_name: str = Field(..., example="Analytics BU")
     business_unit_head_id: str = Field(..., example="EMP-001")
-    business_unit_description: Optional[str] = None
-
-
+    business_unit_description: str = Field(..., example="Analytics BU")
+    
 class BusinessUnitUpdate(BaseModel):
     business_unit_id: str = Field(..., example="BU-001")
     business_unit_name: str = Field(..., example="Analytics BU")
     business_unit_head_id: str = Field(..., example="EMP-001")
-    business_unit_description: Optional[str] = None
-   
-
+    business_unit_description: str = Field(..., example="Analytics BU")
 
 class BusinessUnitRead(BusinessUnitBase):
     model_config = ConfigDict(from_attributes=True)
-
-
+    business_unit_id: str
+    business_unit_name: str
+    business_unit_head_id: str
+    business_unit_description: str
+    created_at: datetime
+    created_by: str
+    updated_at: datetime
+    updated_by: str
+    entity_status: str
+    
 # =====================================================
 # === Project Schemas ===
 # =====================================================
 
 class ProjectBase(BaseModel):
-    # Mapping to Project model: project_id, business_unit_id, project_name, etc.
     project_id: str = Field(..., example="PRJ-001")
     business_unit_id: str = Field(..., example="BU-001")
     project_name: str = Field(..., example="Project Alpha")
-    project_description: Optional[str] = None
+    project_description: str = Field(..., example="Project Alpha")
     delivery_manager_id: str = Field(..., example="EMP-002")
     plan_start_date: Optional[datetime] = None
     plan_end_date: Optional[datetime] = None
