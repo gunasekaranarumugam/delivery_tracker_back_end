@@ -103,15 +103,15 @@ class ProjectBase(BaseModel):
     project_name: str = Field(..., example="Project Alpha")
     project_description: str = Field(..., example="Project Alpha")
     delivery_manager_id: str = Field(..., example="EMP-002")
-    plan_start_date: Optional[datetime] = None
-    plan_end_date: Optional[datetime] = None
-    baseline_start_date: Optional[datetime] = None
-    baseline_end_date: Optional[datetime] = None
-    entitystatus: Optional[str] = "Active"
-    createdat: datetime = Field(default_factory=utcnow)
-    updatedat: datetime = Field(default_factory=utcnow)
-    createdby: Optional[str] = Field(None, example="USR-001")
-
+    plan_start_date: datetime =  Field(..., example="EMP-002")
+    plan_end_date: datetime =  Field(..., example="EMP-002")
+    baseline_start_date: datetime =  Field(..., example="EMP-002")
+    baseline_end_date: datetime =  Field(..., example="EMP-002")
+    created_at: datetime = Field(default_factory=utcnow)
+    created_by: str = Field(..., example="EMP-001")
+    updated_at: datetime = Field(default_factory=utcnow)
+    updated_by: str = Field(..., example="EMP-001")
+    entity_status: str = Field(..., example="Active")
 
 class ProjectCreate(BaseModel):
     business_unit_id: str = Field(..., example="BU-001")
