@@ -4,8 +4,8 @@ from typing import Optional, List
 from datetime import datetime, date
 
 # Utility default for timestamps
-def utcnow():
-    return datetime.utcnow()
+def now():
+    return datetime.datetime.utcnow()
 
 # =====================================================
 # === Employee Schemas ===
@@ -18,9 +18,9 @@ class EmployeeBase(BaseModel):
     password: str = Field(..., example="Secure@123") 
     business_unit_id: str = Field(..., example="BU-001") 
     holiday_calendar_id: str = Field(..., example="CAL-001")
-    created_at: datetime = Field(default_factory=utcnow)
+    created_at: datetime = Field(default_factory=now)
     created_by: str = Field(..., example="EMP-001")
-    updated_at: datetime = Field(default_factory=utcnow)
+    updated_at: datetime = Field(default_factory=now)
     updated_by: str = Field(..., example="EMP-001")
     entity_status: str = Field(..., example="Active")
 
@@ -63,9 +63,9 @@ class BusinessUnitBase(BaseModel):
     business_unit_name: str = Field(..., example="Analytics BU")
     business_unit_head_id: str = Field(..., example="EMP-001")
     business_unit_description: str = Field(..., example="Analytics BU")
-    created_at: datetime = Field(default_factory=utcnow)
+    created_at: datetime = Field(default_factory=now)
     created_by: str = Field(..., example="EMP-001")
-    updated_at: datetime = Field(default_factory=utcnow)
+    updated_at: datetime = Field(default_factory=now)
     updated_by: str = Field(..., example="EMP-001")
     entity_status: str = Field(..., example="Active")
 
@@ -103,13 +103,13 @@ class ProjectBase(BaseModel):
     project_name: str = Field(..., example="Project Alpha")
     project_description: str = Field(..., example="Project Alpha")
     delivery_manager_id: str = Field(..., example="EMP-002")
-    plan_start_date: datetime =  Field(..., example="EMP-002")
-    plan_end_date: datetime =  Field(..., example="EMP-002")
-    baseline_start_date: datetime =  Field(..., example="EMP-002")
-    baseline_end_date: datetime =  Field(..., example="EMP-002")
-    created_at: datetime = Field(default_factory=utcnow)
+    baseline_start_date: datetime =  Field(..., example=now)
+    baseline_end_date: datetime =  Field(..., example=now)
+    plan_start_date: datetime =  Field(..., example=now)
+    plan_end_date: datetime =  Field(..., example=now)
+    created_at: datetime = Field(default_factory=now)
     created_by: str = Field(..., example="EMP-001")
-    updated_at: datetime = Field(default_factory=utcnow)
+    updated_at: datetime = Field(default_factory=now)
     updated_by: str = Field(..., example="EMP-001")
     entity_status: str = Field(..., example="Active")
 
@@ -117,76 +117,99 @@ class ProjectCreate(BaseModel):
     business_unit_id: str = Field(..., example="BU-001")
     project_id: str = Field(..., example="PRJ-001")
     project_name: str = Field(..., example="Project Alpha")
-    project_description: Optional[str] = None
+    project_description: str = Field(..., example="Project Alpha")
     delivery_manager_id: str = Field(..., example="EMP-002")
-    plan_start_date: Optional[datetime] = None
-    plan_end_date: Optional[datetime] = None
-    baseline_start_date: Optional[datetime] = None
-    baseline_end_date: Optional[datetime] = None
-
+    baseline_start_date: datetime =  Field(..., example=now)
+    baseline_end_date: datetime =  Field(..., example=now)
+    plan_start_date: datetime =  Field(..., example=now)
+    plan_end_date: datetime =  Field(..., example=now)
 
 class ProjectUpdate(BaseModel):
-    project_name: Optional[str] = None
+    business_unit_id: str = Field(..., example="BU-001")
     project_id: str = Field(..., example="PRJ-001")
-    project_description: Optional[str] = None
-    delivery_manager_id: Optional[str] = None
-    plan_start_date: Optional[datetime] = None
-    plan_end_date: Optional[datetime] = None
-    entitystatus: Optional[str] = None
-    updatedat: datetime = Field(default_factory=utcnow)
-
+    project_name: str = Field(..., example="Project Alpha")
+    project_description: str = Field(..., example="Project Alpha")
+    delivery_manager_id: str = Field(..., example="EMP-002")
+    plan_start_date: datetime =  Field(..., example=now)
+    plan_end_date: datetime =  Field(..., example=now)
+    entity_status: str = Field(..., example="Active")
 
 class ProjectRead(ProjectBase):
     model_config = ConfigDict(from_attributes=True)
-
+    business_unit_id: str
+    project_id: str
+    project_name: str
+    project_description: str
+    delivery_manager_id: str
+    baseline_start_date: datetime
+    baseline_end_date: datetime
+    plan_start_date: datetime
+    plan_end_date: datetime
+    created_at: datetime
+    created_by: str
+    updated_at: datetime
+    updated_by: str
+    entity_status: str
 
 # =====================================================
 # === Deliverable Schemas ===
 # =====================================================
 
 class DeliverableBase(BaseModel):
-    # Mapping to Deliverable model: deliverable_id, project_id, deliverbale_name, etc.
     deliverable_id: str = Field(..., example="DEL-001")
     project_id: str = Field(..., example="PRJ-001")
-    deliverbale_name: str = Field(..., example="UI Module Delivery") # NOTE: Retaining model's typo
-    deliverable_description: Optional[str] = None
-    priority: Optional[str] = Field(None, example="High")
-    plan_start_date: Optional[datetime] = None
-    plan_end_date: Optional[datetime] = None
-    baseline_start_date: Optional[datetime] = None
-    baseline_end_date: Optional[datetime] = None
-    entitystatus: Optional[str] = "Active"
-    createdat: datetime = Field(default_factory=utcnow)
-    updatedat: datetime = Field(default_factory=utcnow)
-    createdby: Optional[str] = Field(None, example="USR-001")
-
+    deliverbale_name: str = Field(..., example="UI Module Delivery")
+    deliverable_description: str = Field(..., example="UI Module Delivery")
+    priority: str = Field(..., example="High")
+    baseline_start_date: datetime =  Field(..., example=now)
+    baseline_end_date: datetime =  Field(..., example=now)
+    plan_start_date: datetime =  Field(..., example=now)
+    plan_end_date: datetime =  Field(..., example=now)
+    created_at: datetime = Field(default_factory=now)
+    created_by: str = Field(..., example="EMP-001")
+    updated_at: datetime = Field(default_factory=now)
+    updated_by: str = Field(..., example="EMP-001")
+    entity_status: str = Field(..., example="Active")
 
 class DeliverableCreate(BaseModel):
     deliverable_id: str = Field(..., example="DEL-001")
     project_id: str = Field(..., example="PRJ-001")
     deliverbale_name: str = Field(..., example="UI Module Delivery")
-    deliverable_description: Optional[str] = None
-    priority: Optional[str] = None
-    plan_start_date: Optional[datetime] = None
-    plan_end_date: Optional[datetime] = None
-    baseline_start_date: Optional[datetime] = None
-    baseline_end_date: Optional[datetime] = None
-
+    deliverable_description: str = Field(..., example="UI Module Delivery")
+    priority: str = Field(..., example="High")
+    baseline_start_date: datetime =  Field(..., example=now)
+    baseline_end_date: datetime =  Field(..., example=now)
+    plan_start_date: datetime =  Field(..., example=now)
+    plan_end_date: datetime =  Field(..., example=now)
 
 class DeliverableUpdate(BaseModel):
-    deliverbale_name: Optional[str] = None
     deliverable_id: str = Field(..., example="DEL-001")
-    deliverable_description: Optional[str] = None
-    priority: Optional[str] = None
-    plan_start_date: Optional[datetime] = None
-    plan_end_date: Optional[datetime] = None
-    entitystatus: Optional[str] = None
-    updatedat: datetime = Field(default_factory=utcnow)
-
-
+    project_id: str = Field(..., example="PRJ-001")
+    deliverbale_name: str = Field(..., example="UI Module Delivery")
+    deliverable_description: str = Field(..., example="UI Module Delivery")
+    priority: str = Field(..., example="High")
+    baseline_start_date: datetime =  Field(..., example=now)
+    baseline_end_date: datetime =  Field(..., example=now)
+    plan_start_date: datetime =  Field(..., example=now)
+    plan_end_date: datetime =  Field(..., example=now)
+    entity_status: str = Field(..., example="Active")
+    
 class DeliverableRead(DeliverableBase):
     model_config = ConfigDict(from_attributes=True)
-
+    project_id: str
+    deliverable_id: str
+    deliverbale_name: str
+    deliverable_description: str
+    priority: str
+    baseline_start_date: datetime
+    baseline_end_date: datetime
+    plan_start_date: datetime
+    plan_end_date: datetime
+    created_at: datetime
+    created_by: str
+    updated_at: datetime
+    updated_by: str
+    entity_status: str
 
 # =====================================================
 # === Milestone Schemas ===
