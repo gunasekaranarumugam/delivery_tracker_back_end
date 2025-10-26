@@ -107,36 +107,34 @@ class TaskStatus(Base):
     __tablename__ = "task_status"
     task_status_id = Column(String(10), primary_key=True, index=True)
     task_id = Column(String(10))
-    EmployeeId = Column(String(50), ForeignKey("employee.EmployeeId"), nullable=True, index=True)
-    WorkDate = Column(Date, nullable=False)
-    HoursSpent = Column(Numeric(5, 2), nullable=True)
-    Progress = Column(Numeric(5, 2), nullable=True)
-    Remarks = Column(Text, nullable=True)
-    CreatedAt = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    UpdatedAt = Column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    action_date = Column(Date)
+    hours_spent = Column(Numeric(5, 2))
+    progress = Column(Numeric(5, 2))
+    remarks = Column(String(4000))
+    created_at = Column(DateTime, default=now)
+    created_by = Column(String(10))
 
 class Issue(Base):
     __tablename__ = "issue"
-    IssueId = Column(String(50), primary_key=True, index=True)
-    TaskId = Column(String(50),ForeignKey('task.task_id'),nullable=False)
-    Title = Column(String(150), nullable=False)
-    Description = Column(Text, nullable=True)
-    ActionOwnerId = Column(String(50), ForeignKey("employee.EmployeeId"), nullable=True)
-    Priority = Column(String(50), nullable=True)
-    Status = Column(String(50),nullable=True)
-    CreatedAt = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    UpdatedAt = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    
+    issue_id = Column(String(10), primary_key=True, index=True)
+    task_id = Column(String(10))
+    issue_title = Column(String(100))
+    issue_description = Column(String(4000))
+    action_owner_id = Column(String(10))
+    priority = Column(String(100))
+    status = Column(String(100))
+    created_at = Column(DateTime, default=now)
+    created_by = Column(String(10))
+    updated_at = Column(DateTime, default=now)
+    updated_by = Column(String(10))
 
 class IssueActivity(Base):
     __tablename__ = "issue_activity"
-    IssueActivityId = Column(String(50), primary_key=True, index=True)
-    IssueId = Column(String(50), ForeignKey("issue.IssueId"), nullable=False)
-    EmployeeId = Column(String(50), ForeignKey("employee.EmployeeId"), nullable=True)
-    ActivityDate = Column(DateTime(timezone=True), nullable=True)
-    Status = Column(String(50), nullable=True)
-    Remarks = Column(Text, nullable=True)
-    CreatedAt = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    issue_activity_id = Column(String(10), primary_key=True, index=True)
+    issueId = Column(String(10))
+    comment_by = Column(String(10))
+    comment_at = Column(DateTime, default=now)
+    comment = Column(String(4000))
 
 class AuditLog(Base): 
     __tablename__ = "audit_log"
