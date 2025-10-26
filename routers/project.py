@@ -1,14 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, Cookie, Request
-from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, Cookie, Request, status
+from typing import Optional, List
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from datetime import datetime
 from jose import jwt, JWTError
+from fastapi.security import OAuth2PasswordBearer
 
+# Assuming these imports are correct based on your project structure
 from main import models, schemas, crud
 from main.database import get_db
-from fastapi.security import OAuth2PasswordBearer
-from main.models import Role  # constants class
+from main.models import Role # constants class
 
 router = APIRouter()
 
@@ -16,140 +17,139 @@ SECRET_KEY = "super-secret-key"
 ALGORITHM = "HS256"
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/token")
 
-# ------------------------- AUTH HELPERS -------------------------
+# --- UTILITY FUNCTIONS (Corrected) ---
 
 def decode_token_and_get_username(token: str) -> str:
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username = payload.get("sub")
-        if not username:
+        # The token subject is the full_name, not a separate username field
+        payload = jwt.decode(token.strip(), SECRET_KEY, algorithms=[ALGORITHM])
+        full_name = payload.get("sub")
+        if not full_name:
             raise HTTPException(status_code=401, detail="Invalid token payload")
-        return username
+        return full_name
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
-def attach_employee_and_role(user, db: Session, employee_id: str):
-    if not employee_id:
-        raise HTTPException(status_code=400, detail="EmployeeId not provided")
-
-    employee_id_clean = employee_id.strip().upper()
+def get_employee_by_user(db: Session, user: models.User) -> models.Employee:
+    """Helper to get the associated Employee object for the current User."""
     employee = db.query(models.Employee).filter(
-        func.upper(models.Employee.EmployeeId) == employee_id_clean
+        # FIX: Use correct user field: email_address
+        models.Employee.Email == user.email_address 
     ).first()
     if not employee:
-        raise HTTPException(status_code=400, detail=f"Employee '{employee_id_clean}' not found")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No employee record linked to your user account.")
+    return employee
 
-    user.employee = employee
-    if not employee.RoleId:
-        raise HTTPException(status_code=400, detail=f"Role not assigned to employee '{employee_id_clean}'")
 
+def get_user_role_and_bu(db: Session, user: models.User) -> tuple[str, Optional[str]]:
+    """Helper to get the current user's active role name and BU ID."""
+    employee = get_employee_by_user(db, user)
+
+    # 1. Get the current employee's active role assignment
+    employee_role_link = db.query(models.EmployeeRole).filter(
+        models.EmployeeRole.EmployeeId == employee.EmployeeId,
+        models.EmployeeRole.EntityStatus == "Active",
+        models.EmployeeRole.Active == 1
+    ).join(models.RoleMaster).first()
+
+    if not employee_role_link:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User has no active role assigned.")
+
+    # 2. Get the RoleMaster object
     role = db.query(models.RoleMaster).filter(
-        func.upper(models.RoleMaster.RoleId) == employee.RoleId.strip().upper()
+        models.RoleMaster.RoleId == employee_role_link.RoleId
     ).first()
-    if not role:
-        raise HTTPException(status_code=400, detail=f"Role '{employee.RoleId}' not found for employee '{employee_id_clean}'")
+    
+    # Return RoleName and BUId (assuming models.Employee has a BUId field)
+    return role.RoleName if role else "UNKNOWN", employee.BUId
 
-    user.role = role
-    return user
-
-
-
+# Corrected Dependency function
 def get_current_user_from_cookie(
     request: Request,
-    token: Optional[str] = Depends(oauth2_scheme),  # reads Authorization header bearer token if present
+    token: Optional[str] = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
 ) -> models.User:
-    # Fallback to cookie token if Authorization header missing
     if not token:
         token = request.cookies.get("access_token")
 
     if not token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
-    username = decode_token_and_get_username(token)
-    user = db.query(models.User).filter(models.User.userName == username).first()
+    # FIX: Use full_name (token subject) and models.User.full_name (DB column)
+    full_name = decode_token_and_get_username(token)
+    user = db.query(models.User).filter(models.User.full_name == full_name).first()
 
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        
     return user
+
 
 # ------------------------- CREATE PROJECT -------------------------
 
-@router.post("/", response_model=schemas.ProjectRead, summary="Create a new project")
+@router.post("/", response_model=schemas.ProjectRead, status_code=status.HTTP_201_CREATED, summary="Create a new project")
 def create_project(
     payload: schemas.ProjectCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie)
 ):
-    emp = db.query(models.Employee).filter(models.Employee.Email == current_user.emailID).first()
-    if not emp:
-        raise HTTPException(status_code=403, detail="Your employee record not found")
-    if not emp.RoleId:
-        raise HTTPException(status_code=403, detail="Role not assigned to your employee")
+    role_name, user_bu_id = get_user_role_and_bu(db, current_user)
+    
+    # 1. Permission Check
+    allowed_roles = [Role.BU_HEAD, Role.ADMIN]
+    if role_name not in allowed_roles:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Permission denied. Only ADMIN and BU HEAD can create projects.")
 
-    role = db.query(models.RoleMaster).filter(models.RoleMaster.RoleId == emp.RoleId).first()
-    if role.RoleName not in [Role.BU_HEAD, Role.ADMIN]:
-        raise HTTPException(status_code=403, detail="Permission denied")
+    # 2. BU Restriction for BU HEAD
+    # FIX: Use correct project field name: business_unit_id
+    if role_name == Role.BU_HEAD and payload.business_unit_id != user_bu_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="BU HEAD can only create projects within their own BU.")
 
-    # Only non-admins are restricted by BU
-    if role.RoleName != Role.ADMIN and payload.BUId != emp.BUId:
-        raise HTTPException(status_code=403, detail="Cannot create project outside your BU")
+    # 3. Validate Delivery Manager existence
+    # FIX: Use correct payload field name: delivery_manager_id
+    dm_employee = db.query(models.Employee).filter(
+        models.Employee.EmployeeId == payload.delivery_manager_id.strip().upper()
+    ).first()
 
-    if not payload.DeliveryManager:
-        raise HTTPException(status_code=400, detail="DeliveryManager EmployeeId not provided")
+    if not dm_employee:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Delivery Manager EmployeeId not found.")
 
-    dm_user = attach_employee_and_role(models.User(), db, payload.DeliveryManager)
-
+    # 4. Create Project
+    # FIX: Use correct model field names for Project
     proj = models.Project(
-        ProjectId=payload.ProjectId,
-        ProjectName=payload.ProjectName,
-        BUId=payload.BUId,
-        PlannedStartDate=payload.PlannedStartDate,
-        PlannedEndDate=payload.PlannedEndDate,
-        DeliveryManagerId=dm_user.employee.EmployeeId,
-        CreatedById=current_user.UserId,
-        CreatedAt=datetime.utcnow(),
-        EntityStatus="Active"
+        project_id=payload.project_id,
+        project_name=payload.project_name,
+        business_unit_id=payload.business_unit_id,
+        project_description=payload.project_description,
+        plan_start_date=payload.plan_start_date,
+        plan_end_date=payload.plan_end_date,
+        delivery_manager_id=dm_employee.EmployeeId, # Use validated EmployeeId
+        createdby=current_user.user_id, # FIX: Use correct user field: user_id
+        entitystatus=payload.entitystatus,
+        createdat=datetime.utcnow(),
     )
+    
     db.add(proj)
-    db.commit()
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        if 'Duplicate entry' in str(e):
+             # FIX: Use correct project field: project_id
+             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Project with ID {payload.project_id} already exists.")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not create project due to a database error.")
+
     db.refresh(proj)
-    crud.audit_log(db, 'Project', proj.ProjectId, 'Create', changed_by=current_user.UserId)
+    # FIX: Use correct project and user field names
+    crud.audit_log(db, 'Project', proj.project_id, 'Create', changed_by=current_user.user_id)
 
-    delivery_manager_data = {
-        "EmployeeId": dm_user.employee.EmployeeId,
-        "FullName": f"{dm_user.employee.FirstName} {dm_user.employee.LastName}",
-        "Email": dm_user.employee.Email,
-        "BUId": dm_user.employee.BUId,
-        "Status": dm_user.employee.EntityStatus,
-        "RoleName": dm_user.role.RoleName
-    }
-    created_by_data = {
-        "UserId": current_user.UserId,
-        "userName": current_user.userName,
-        "fullName": f"{emp.FirstName} {emp.LastName}",
-        "emailID": current_user.emailID,
-        "BUId": emp.BUId,
-        "RoleName": role.RoleName,
-        "RoleId": role.RoleId,
-    }
+    # 5. Return the ORM object, let Pydantic handle the rest
+    return crud.get_project_read_model(db, proj.project_id, current_user, proj=proj)
 
-    return schemas.ProjectRead(
-        ProjectId=proj.ProjectId,
-        ProjectName=proj.ProjectName,
-        BUId=proj.BUId,
-        PlannedStartDate=proj.PlannedStartDate,
-        PlannedEndDate=proj.PlannedEndDate,
-        DeliveryManager=delivery_manager_data,
-        CreatedBy=created_by_data,
-        deliverables=[],
-        EntityStatus=proj.EntityStatus,
-        CreatedAt=proj.CreatedAt,
-    )
 
-# ✅ GET - Project by ID
+# ------------------------- GET PROJECT BY ID -------------------------
+
 @router.get("/{id}", response_model=schemas.ProjectRead, summary="Get Project details by Project ID")
 def get_project_by_id(
     id: str,
@@ -157,115 +157,79 @@ def get_project_by_id(
     current_user: models.User = Depends(get_current_user_from_cookie),
 ):
     role_name, user_bu_id = get_user_role_and_bu(db, current_user)
+    current_employee = get_employee_by_user(db, current_user)
 
     # 1. Fetch the Project
+    # FIX: Use correct project field name: project_id
     project = db.query(models.Project).filter(
-        models.Project.ProjectId == id,
-        models.Project.EntityStatus != "Archived"
+        models.Project.project_id == id,
+        models.Project.entitystatus != "Archived"
     ).first()
 
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found or archived")
 
     # 2. Permission Check: Access control logic
+    is_allowed = False
     
-    # Who can view a project?
-    # - ADMIN: Always
-    # - BU HEAD: Projects in their BU
-    # - Project Manager/Delivery Manager: Projects they are assigned to
-    # - Other Roles: Typically restricted or only allowed for projects they are actively on (this requires checking the ProjectTeam model)
+    # ADMIN check
+    if role_name == Role.ADMIN:
+        is_allowed = True
     
-    allowed_roles = ["ADMIN", "BU HEAD", "PROJECT MANAGER", "DELIVERY MANAGER"]
-    
-    if role_name in allowed_roles:
-        if role_name == "ADMIN":
-            return project # Admin can view any project
-
-        if role_name == "BU HEAD":
-            # Check if the project belongs to the user's BU
-            if project.BUId == user_bu_id:
-                return project
-            else:
-                # BU HEAD can only see projects in their own BU
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only view projects in your Business Unit")
-
-        # For PM/DM, we need to check the ProjectTeam assignments.
-        # This requires fetching the current user's Employee ID first.
-        current_employee = db.query(models.Employee).filter(models.Employee.Email == current_user.emailID).first()
-        if current_employee and current_employee.EmployeeId:
-            # Check if the user is assigned to the project's team
+    # BU HEAD check
+    # FIX: Use correct project field name: business_unit_id
+    elif role_name == Role.BU_HEAD and project.business_unit_id == user_bu_id:
+        is_allowed = True
+        
+    # Project Manager/Delivery Manager/Team Member Check
+    else:
+        # Check if the user is the project's Delivery Manager
+        # FIX: Use correct project field name: delivery_manager_id
+        if project.delivery_manager_id == current_employee.EmployeeId:
+            is_allowed = True
+        
+        # Check if the user is assigned to the project's team (ProjectTeam model)
+        if not is_allowed:
+            # Assuming ProjectTeam uses project_id and EmployeeId
             is_member = db.query(models.ProjectTeam).filter(
                 models.ProjectTeam.ProjectId == id,
                 models.ProjectTeam.EmployeeId == current_employee.EmployeeId
             ).first()
             if is_member:
-                return project
+                is_allowed = True
             
-    # If the user is none of the above (or PM/DM but not on the team), deny access.
-    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to view this project.")
+    if not is_allowed:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to view this project.")
 
-    
-@router.get("/", response_model=list[schemas.ProjectRead], summary="Get all projects")
+    # 3. Return the ORM object
+    return crud.get_project_read_model(db, project.project_id, current_user, proj=project)
+
+
+# ------------------------- GET ALL PROJECTS -------------------------
+
+@router.get("/", response_model=List[schemas.ProjectRead], summary="Get all projects")
 def list_projects(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie)
 ):
-    # Get the employee and role for permission check
-    emp = db.query(models.Employee).filter(models.Employee.Email == current_user.emailID).first()
-    if not emp:
-        raise HTTPException(status_code=403, detail="Employee record not found")
+    role_name, user_bu_id = get_user_role_and_bu(db, current_user)
     
-    role = db.query(models.RoleMaster).filter(models.RoleMaster.RoleId == emp.RoleId).first()
-    if not role:
-        raise HTTPException(status_code=403, detail="Role not assigned to employee")
+    query = db.query(models.Project)
     
     # Non-admins only see projects in their BU
-    if role.RoleName != "ADMIN":
-        projects = db.query(models.Project).filter(models.Project.BUId == emp.BUId).all()
-    else:
-        projects = db.query(models.Project).all()  # Admin can see all
+    if role_name != Role.ADMIN:
+        # Filter projects by the user's BU
+        # FIX: Use correct project field name: business_unit_id
+        query = query.filter(models.Project.business_unit_id == user_bu_id)
+    
+    projects = query.all()
 
-    # Prepare response
-    response = []
-    for proj in projects:
-        dm_emp = db.query(models.Employee).filter(models.Employee.EmployeeId == proj.DeliveryManagerId).first()
-        dm_role = db.query(models.RoleMaster).filter(models.RoleMaster.RoleId == dm_emp.RoleId).first() if dm_emp else None
-
-        delivery_manager_data = {
-            "EmployeeId": dm_emp.EmployeeId if dm_emp else None,
-            "FullName": f"{dm_emp.FirstName} {dm_emp.LastName}" if dm_emp else None,
-            "Email": dm_emp.Email if dm_emp else None,
-            "BUId": dm_emp.BUId if dm_emp else None,
-            "Status": dm_emp.EntityStatus if dm_emp else None,
-            "RoleId": dm_role.RoleId if dm_role else None,
-            "RoleName": dm_role.RoleName if dm_role else None
-        }
-
-        created_by_emp = db.query(models.Employee).filter(models.Employee.Email == current_user.emailID).first()
-        created_by_role = role
-
-        created_by_data = {
-            "UserId": current_user.UserId,
-            "userName": current_user.userName,
-            "fullName": f"{created_by_emp.FirstName} {created_by_emp.LastName}" if created_by_emp else None,
-            "emailID": current_user.emailID,
-            "BUId": created_by_emp.BUId if created_by_emp else None,
-            "RoleId": created_by_role.RoleId,
-            "RoleName": created_by_role.RoleName
-        }
-
-        response.append(schemas.ProjectRead(
-            ProjectId=proj.ProjectId,
-            ProjectName=proj.ProjectName,
-            BUId=proj.BUId,
-            PlannedStartDate=proj.PlannedStartDate,
-            PlannedEndDate=proj.PlannedEndDate,
-            DeliveryManager=delivery_manager_data,
-            CreatedBy=created_by_data,
-            deliverables=[],  # include deliverables if needed
-            EntityStatus=proj.EntityStatus,
-            CreatedAt=proj.CreatedAt,
-        ))
+    # Prepare response: Use a helper to correctly build the complex ProjectRead model for each project
+    response = [
+        # FIX: Use correct project field name: project_id
+        crud.get_project_read_model(db, proj.project_id, current_user, proj=proj)
+        for proj in projects
+    ]
 
     return response
 
@@ -274,31 +238,60 @@ def list_projects(
 @router.put("/{id}", response_model=schemas.ProjectRead, summary="Update project")
 def update_project(
     id: str,
-    payload: schemas.ProjectCreate,
+    payload: schemas.ProjectUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie)
 ):
-    proj = db.query(models.Project).filter(models.Project.ProjectId == id).first()
+    # FIX: Use correct project field name: project_id
+    proj = db.query(models.Project).filter(models.Project.project_id == id).first()
     if not proj:
-        raise HTTPException(status_code=404, detail="Project not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
 
-    emp = db.query(models.Employee).filter(models.Employee.Email == current_user.emailID).first()
-    role = db.query(models.RoleMaster).filter(models.RoleMaster.RoleId == emp.RoleId).first()
-    if role.RoleName not in [Role.ADMIN, Role.BU_HEAD, Role.PROJECT_MANAGER]:
-        raise HTTPException(status_code=403, detail="Permission denied")
+    role_name, user_bu_id = get_user_role_and_bu(db, current_user)
+    current_employee = get_employee_by_user(db, current_user)
+    
+    # Permission Check
+    is_authorized = False
+    if role_name == Role.ADMIN:
+        is_authorized = True
+    # FIX: Use correct project field name: business_unit_id
+    elif role_name == Role.BU_HEAD and proj.business_unit_id == user_bu_id:
+        is_authorized = True
+    # FIX: Use correct project field name: delivery_manager_id
+    elif current_employee.EmployeeId == proj.delivery_manager_id: 
+        is_authorized = True
+        
+    if not is_authorized:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Permission denied. You must be the ADMIN, BU HEAD of the project's BU, or the Delivery Manager.")
 
-    if payload.DeliveryManager:
-        dm_user = attach_employee_and_role(models.User(), db, payload.DeliveryManager)
-        proj.DeliveryManagerId = dm_user.employee.EmployeeId
+    # Update Delivery Manager if provided in payload
+    # FIX: Use correct payload field name: delivery_manager_id
+    if payload.delivery_manager_id:
+        dm_employee = db.query(models.Employee).filter(
+            models.Employee.EmployeeId == payload.delivery_manager_id.strip().upper()
+        ).first()
+        if not dm_employee:
+             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="New Delivery Manager EmployeeId not found.")
+        # FIX: Use correct project field name: delivery_manager_id
+        proj.delivery_manager_id = dm_employee.EmployeeId
+    
+    # Update other fields from payload
+    update_data = payload.model_dump(exclude_unset=True) 
 
-    for field, value in payload.dict(exclude={"DeliveryManager"}).items():
-        if value is not None:
+    update_data['updatedat'] = datetime.utcnow() # FIX: Use updatedat field
+    
+    for field, value in update_data.items():
+        # FIX: Check for the correct field name
+        if field not in ["delivery_manager_id"] and value is not None:
             setattr(proj, field, value)
 
     db.commit()
     db.refresh(proj)
-    crud.audit_log(db, 'Project', proj.ProjectId, 'Update', changed_by=current_user.UserId)
-    return proj
+    # FIX: Use correct project and user field names
+    crud.audit_log(db, 'Project', proj.project_id, 'Update', changed_by=current_user.user_id)
+    
+    # Return the complex read model
+    return crud.get_project_read_model(db, proj.project_id, current_user, proj=proj)
 
 # ------------------------- ARCHIVE PROJECT -------------------------
 
@@ -308,17 +301,29 @@ def archive_project(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user_from_cookie)
 ):
-    proj = db.query(models.Project).filter(models.Project.ProjectId == id).first()
+    # FIX: Use correct project field name: project_id
+    proj = db.query(models.Project).filter(models.Project.project_id == id).first()
     if not proj:
-        raise HTTPException(status_code=404, detail="Project not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
 
-    emp = db.query(models.Employee).filter(models.Employee.Email == current_user.emailID).first()
-    role = db.query(models.RoleMaster).filter(models.RoleMaster.RoleId == emp.RoleId).first()
-    if role.RoleName not in [Role.ADMIN, Role.BU_HEAD]:
-        raise HTTPException(status_code=403, detail="Permission denied")
+    role_name, user_bu_id = get_user_role_and_bu(db, current_user)
+    
+    # Permission Check
+    if role_name not in [Role.ADMIN, Role.BU_HEAD]:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Permission denied. Only ADMIN or BU HEAD can archive projects.")
+    
+    # BU HEAD restriction
+    # FIX: Use correct project field name: business_unit_id
+    if role_name == Role.BU_HEAD and proj.business_unit_id != user_bu_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="BU HEAD can only archive projects within their own BU.")
 
-    proj.EntityStatus = "Archived"
+
+    proj.entitystatus = "Archived" # FIX: Use correct field: entitystatus
+    proj.updatedat = datetime.utcnow() # FIX: Use correct field: updatedat
     db.commit()
     db.refresh(proj)
-    crud.audit_log(db, 'Project', proj.ProjectId, 'Archive', changed_by=current_user.UserId)
-    return proj
+    # FIX: Use correct project and user field names
+    crud.audit_log(db, 'Project', proj.project_id, 'Archive', changed_by=current_user.user_id)
+    
+    # Return the complex read model
+    return crud.get_project_read_model(db, proj.project_id, current_user, proj=proj)

@@ -17,7 +17,7 @@ from main.models import Base
 
 
 # Create tables (for development convenience)
-Base.metadata.create_all(bind=engine)
+#Base.metadata.create_all(bind=engine)
 
 openapi_tags = [
     {"name": "User", "description": "Operations related to system users"},

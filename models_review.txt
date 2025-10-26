@@ -23,11 +23,11 @@ class User(Base):
     full_name = Column(String(200))
     email_address = Column(String(200))
     password = Column(String(200))
-    entity_status = Column(String(50), default="Active")
-    created_at = Column(DateTime, default=now)
-    updated_at = Column(DateTime, default=now)
+    entitystatus = Column(String(50), default="Active")
+    createdat = Column(DateTime, default=now)
+    updatedat = Column(DateTime, default=now)
     # Self-referencing FK to the user_id of the same table
-    created_by = Column(String(50))
+    createdby = Column(String(50), ForeignKey('user.user_id'))
 
 
 class RoleMaster(Base):
@@ -104,11 +104,11 @@ class BusinessUnit(Base):
     # FK must refer to 'EmployeeId' as defined in the Employee class
     business_unit_head_id= Column(String(50),ForeignKey('employee.EmployeeId'),nullable=False)
     business_unit_description = Column(Text, nullable=True)
-    entity_status = Column(String(50), default="Active")
-    created_at = Column(DateTime, default=now)
-    updated_at = Column(DateTime, default=now)
+    entitystatus = Column(String(50), default="Active")
+    createdat = Column(DateTime, default=now)
+    updatedat = Column(DateTime, default=now)
     # FK must refer to 'user_id' as defined in the User class
-    created_by = Column(String(50),ForeignKey('user.user_id')) 
+    createdby = Column(String(50),ForeignKey('user.user_id')) 
 
 # Using the new, cleaner snake_case definition for Project
 class Project(Base):
@@ -126,10 +126,10 @@ class Project(Base):
     # Added Baseline dates back to the Project model for completeness
     baseline_start_date = Column(DateTime,default=now) 
     baseline_end_date = Column(DateTime,default=now)
-    entity_status = Column(String(50), default="Active")
-    created_at = Column(DateTime, default=now)
-    updated_at = Column(DateTime, default=now)
-    created_by = Column(String(50),ForeignKey('user.user_id'))
+    entitystatus = Column(String(50), default="Active")
+    createdat = Column(DateTime, default=now)
+    updatedat = Column(DateTime, default=now)
+    createdby = Column(String(50),ForeignKey('user.user_id'))
 
 # Using the new, cleaner snake_case definition for Deliverable
 class Deliverable(Base): 
@@ -144,10 +144,10 @@ class Deliverable(Base):
     baseline_end_date = Column(DateTime,default=now)
     plan_start_date = Column(DateTime,default=now)
     plan_end_date = Column(DateTime,default=now)
-    entity_status = Column(String(50), default="Active")
-    created_at = Column(DateTime, default=now)
-    updated_at = Column(DateTime, default=now)
-    created_by = Column(String(50),ForeignKey('user.user_id'))
+    entitystatus = Column(String(50), default="Active")
+    createdat = Column(DateTime, default=now)
+    updatedat = Column(DateTime, default=now)
+    createdby = Column(String(50),ForeignKey('user.user_id'))
 
 # ----------------------------------------------------------------------
 # Task and Skill Models
@@ -228,10 +228,10 @@ class Task(Base):
     # Added Baseline dates back to the Task model for completeness
     baseline_start_date = Column(DateTime,default=now) 
     baseline_end_date = Column(DateTime,default=now)
-    entity_status = Column(String(50), default="Active")
-    created_at = Column(DateTime, default=now)
-    updated_at = Column(DateTime, default=now)
-    created_by = Column(String(50),ForeignKey('user.user_id'))
+    entitystatus = Column(String(50), default="Active")
+    createdat = Column(DateTime, default=now)
+    updatedat = Column(DateTime, default=now)
+    createdby = Column(String(50),ForeignKey('user.user_id'))
 
 
 class TaskSkillRequirement(Base):
@@ -290,7 +290,7 @@ class AuditLog(Base):
     old_value = Column(String(1000), nullable=True)
     new_value = Column(String(1000), nullable=True)
     changed_by = Column(String(200), nullable=True)
-    created_at = Column(DateTime, default=now)
+    createdat = Column(DateTime, default=now)
 
 
 # ----------------------------------------------------------------------

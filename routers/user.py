@@ -19,12 +19,16 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+
+# Assumes the client will hit /user/token, as defined in the main app's router prefix
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/token")
 
+# Initialize without a prefix; the prefix /user is applied in the main application
 router = APIRouter()
 
 # In-memory OTP cache
-otp_cache = {}  # {username: {"otp": "123456", "expires": datetime}}
+# Stores data using the unique user_id as the key
+otp_cache = {}  # {user_id: {"otp": "123456", "expires": datetime}} 
 
 # ------------------ UTILITIES ------------------
 
@@ -43,32 +47,38 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 def decode_token(token: str) -> str:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if not username:
+        # The subject ('sub') is the full_name, used for lookup
+        full_name: str = payload.get("sub")
+        if not full_name:
             raise ValueError("Token missing subject")
-        return username
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
+        return full_name
+    except JWTError as e:
+        raise HTTPException(status_code=401, detail=f"Invalid or expired token: {e}")
 
 def generate_otp() -> str:
     return str(random.randint(100000, 999999))
 
 def generate_next_user_id(db: Session) -> str:
-    last_user = db.query(models.User).order_by(models.User.UserId.desc()).first()
-    if not last_user or not last_user.UserId or '-' not in last_user.UserId:
+    # Uses models.User.user_id
+    last_user = db.query(models.User).order_by(models.User.user_id.desc()).first()
+    
+    if not last_user or not last_user.user_id or '-' not in last_user.user_id:
         return "USR-001"
+    
     try:
-        prefix, number_str = last_user.UserId.split('-')
+        prefix, number_str = last_user.user_id.split('-')
         number = int(number_str)
     except (ValueError, IndexError):
         prefix = "USR"
         number = 0
+        
     new_number = number + 1
     return f"{prefix}-{new_number:03d}"
 
 def get_user_by_token(token: str, db: Session) -> models.User:
-    username = decode_token(token)
-    user = db.query(models.User).filter(models.User.UserName == username).first()
+    full_name = decode_token(token) 
+    # Uses models.User.full_name
+    user = db.query(models.User).filter(models.User.full_name == full_name).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
@@ -77,39 +87,35 @@ def get_user_by_token(token: str, db: Session) -> models.User:
 
 @router.post("/register", status_code=201)
 def register_user(payload: schemas.UserRegister, db: Session = Depends(get_db)):
-    # Check if username already exists
-    if db.query(models.User).filter(models.User.UserName == payload.UserName).first():
-        raise HTTPException(status_code=400, detail="Username already exists")
+    # Uses models.User.full_name
+    if db.query(models.User).filter(models.User.full_name == payload.full_name).first():
+        raise HTTPException(status_code=400, detail="Username (full_name) already exists")
 
-    # Check if email already exists
-    if db.query(models.User).filter(models.User.emailID == payload.emailID).first():
+    # Uses models.User.email_address
+    if db.query(models.User).filter(models.User.email_address == payload.email_address).first():
         raise HTTPException(status_code=400, detail="Email already exists for another user")
 
-    # Check if email matches an Employee email
-    if db.query(models.Employee).filter(models.Employee.Email == payload.emailID).first():
-        raise HTTPException(status_code=400, detail="Email cannot match an Employee's email")
+    # (Employee check commented out as per your last code block)
 
     new_user_id = generate_next_user_id(db)
     new_user = models.User(
-        UserId=new_user_id,
-        UserName=payload.UserName,
+        user_id=new_user_id, 
+        full_name=payload.full_name, 
         password=hash_password(payload.password),
-        emailID=payload.emailID,
-        FirstName=payload.FirstName,
-        lastName=payload.lastName,
+        email_address=payload.email_address, 
     )
 
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
 
-    return {"message": "User registered successfully", "UserId": new_user_id}
+    return {"message": "User registered successfully", "user_id": new_user_id}
 
 # --- Login Form ---
 class SimpleLoginForm:
     def __init__(
         self,
-        username: str = Form(..., description="Your username"),
+        username: str = Form(..., description="Your username (full_name)"),
         password: str = Form(..., description="Your password"),
     ):
         self.username = username
@@ -120,14 +126,15 @@ def login_for_access_token(
     form_data: SimpleLoginForm = Depends(),
     db: Session = Depends(get_db),
 ):
-    user = db.query(models.User).filter(models.User.UserName == form_data.username).first()
+    # Uses models.User.full_name
+    user = db.query(models.User).filter(models.User.full_name == form_data.username).first()
     if not user or not verify_password(form_data.password, user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password"
+            detail="Incorrect username (full_name) or password"
         )
 
-    access_token = create_access_token(data={"sub": user.UserName})
+    access_token = create_access_token(data={"sub": user.full_name})
     return {"access_token": access_token, "token_type": "bearer"}
 
 # ------------------ OTP FLOW ------------------
@@ -137,37 +144,46 @@ def request_otp(
     db: Session = Depends(get_db),
     token: str = Depends(oauth2_scheme),
 ):
-    username = decode_token(token)
-    user = db.query(models.User).filter(models.User.UserName == username).first()
+    full_name = decode_token(token) 
+    # Uses models.User.full_name
+    user = db.query(models.User).filter(models.User.full_name == full_name).first()
+    
     if not user:
-        raise HTTPException(status_code=401, detail="User not found")
+        raise HTTPException(status_code=401, detail="User not found or token invalid")
 
     otp = generate_otp()
     expiry = datetime.utcnow() + timedelta(minutes=5)
+    
+    # Stores OTP using the unique 'user_id'
+    otp_cache[user.user_id] = {"otp": otp, "expires": expiry} 
+    
+    print(f"[DEBUG] OTP for User ID {user.user_id} ({user.full_name}): {otp}") 
+    
+    return {"message": f"OTP sent successfully (mocked) to {user.email_address}"}
 
-    otp_cache[user.UserName] = {"otp": otp, "expires": expiry}
-    print(f"[DEBUG] OTP for {user.UserName}: {otp}")  # Simulate email sending
-
-    return {"message": "OTP sent successfully (mocked)"}
-
+    
 @router.post("/verify-otp", response_model=schemas.UserLoginResponse)
 def verify_otp(
     response: Response,
-    username: str = Form(...),
+    username: str = Form(...), # Maps to full_name
     otp: str = Form(...),
     db: Session = Depends(get_db),
 ):
-    user = db.query(models.User).filter(models.User.UserName == username.strip()).first()
+    # 1. Find the user by full_name
+    user = db.query(models.User).filter(models.User.full_name == username.strip()).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    record = otp_cache.get(user.UserName)
+    # 2. Retrieves OTP using the unique 'user_id' (FIXED)
+    record = otp_cache.get(user.user_id) 
+    
     if not record or record["otp"] != otp or datetime.utcnow() > record["expires"]:
         raise HTTPException(status_code=400, detail="Invalid or expired OTP")
 
-    del otp_cache[user.UserName]  # Clear OTP after use
+    # 3. Clear OTP after use, using user_id
+    del otp_cache[user.user_id] 
 
-    token = create_access_token({"sub": user.UserName})
+    token = create_access_token({"sub": user.full_name}) # Use full_name as subject
 
     response.set_cookie(
         key="access_token",
@@ -179,13 +195,12 @@ def verify_otp(
         path="/",
     )
 
+    # Return the response using the correct fields
     return schemas.UserLoginResponse(
-        userName=user.UserName,
-        emailID=user.emailID,
-        FirstName=user.FirstName or "",
-        lastName=user.lastName or "",
+        user_id=user.user_id,
+        full_name=user.full_name,
+        email_address=user.email_address,
         authToken=token,
-        UserId=user.UserId,
     )
 
 @router.post("/logout")

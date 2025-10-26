@@ -11,4 +11,6 @@ passlib[argon2]
 PyJWT
 pymysql
 alembic
+python-dotenv
+
 

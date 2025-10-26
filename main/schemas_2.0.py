@@ -1,4 +1,3 @@
-# schemas.py
 from pydantic import BaseModel, Field, EmailStr, ConfigDict
 from typing import Optional, List
 from datetime import datetime, date
@@ -7,9 +6,9 @@ from datetime import datetime, date
 def utcnow():
     return datetime.utcnow()
 
-
 # =====================================================
-# === User Schemas ===
+# === User Schemas (Based on User model) ===
+# NOTE: User model attributes use snake_case
 # =====================================================
 
 class UserBase(BaseModel):
@@ -19,7 +18,6 @@ class UserBase(BaseModel):
     email_address: EmailStr = Field(..., example="john.doe@example.com") 
     password: str = Field(..., example="Secure@123")
     entitystatus: Optional[str] = Field("Active", example="Active")
-    created_by: Optional[str] = Field("USER-001")
     createdat: datetime = Field(default_factory=utcnow)
     updatedat: datetime = Field(default_factory=utcnow)
 
@@ -40,7 +38,6 @@ class UserRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     user_id: str
-    created_by: Optional[str]
     full_name: Optional[str]
     email_address: Optional[EmailStr]
     entitystatus: Optional[str]
@@ -58,11 +55,11 @@ class UserLoginResponse(BaseModel):
 class UserCreate(UserBase):
     """Schema used for creating a new user."""
     pass
-
-
+    
 # =====================================================
-# === Business Unit Schemas ===
+# === Business Unit Schemas (Based on snake_case model) ===
 # =====================================================
+
 class BusinessUnitBase(BaseModel):
     # Mapping to BusinessUnit model: business_unit_id, business_unit_name, etc.
     business_unit_id: str = Field(..., example="BU-001")
@@ -76,18 +73,17 @@ class BusinessUnitBase(BaseModel):
 
 
 class BusinessUnitCreate(BaseModel):
-    business_unit_id: str = Field(..., example="BU-001")
     business_unit_name: str = Field(..., example="Analytics BU")
     business_unit_head_id: str = Field(..., example="EMP-001")
     business_unit_description: Optional[str] = None
 
 
 class BusinessUnitUpdate(BaseModel):
-    business_unit_id: str = Field(..., example="BU-001")
-    business_unit_name: str = Field(..., example="Analytics BU")
-    business_unit_head_id: str = Field(..., example="EMP-001")
+    business_unit_name: Optional[str] = None
+    business_unit_head_id: Optional[str] = None
     business_unit_description: Optional[str] = None
-   
+    entitystatus: Optional[str] = None
+    updatedat: datetime = Field(default_factory=utcnow)
 
 
 class BusinessUnitRead(BusinessUnitBase):
@@ -95,7 +91,7 @@ class BusinessUnitRead(BusinessUnitBase):
 
 
 # =====================================================
-# === Project Schemas ===
+# === Project Schemas (Based on snake_case model) ===
 # =====================================================
 
 class ProjectBase(BaseModel):
@@ -117,7 +113,6 @@ class ProjectBase(BaseModel):
 
 class ProjectCreate(BaseModel):
     business_unit_id: str = Field(..., example="BU-001")
-    project_id: str = Field(..., example="PRJ-001")
     project_name: str = Field(..., example="Project Alpha")
     project_description: Optional[str] = None
     delivery_manager_id: str = Field(..., example="EMP-002")
@@ -129,7 +124,6 @@ class ProjectCreate(BaseModel):
 
 class ProjectUpdate(BaseModel):
     project_name: Optional[str] = None
-    project_id: str = Field(..., example="PRJ-001")
     project_description: Optional[str] = None
     delivery_manager_id: Optional[str] = None
     plan_start_date: Optional[datetime] = None
@@ -143,7 +137,7 @@ class ProjectRead(ProjectBase):
 
 
 # =====================================================
-# === Deliverable Schemas ===
+# === Deliverable Schemas (Based on snake_case model) ===
 # =====================================================
 
 class DeliverableBase(BaseModel):
@@ -164,7 +158,6 @@ class DeliverableBase(BaseModel):
 
 
 class DeliverableCreate(BaseModel):
-    deliverable_id: str = Field(..., example="DEL-001")
     project_id: str = Field(..., example="PRJ-001")
     deliverbale_name: str = Field(..., example="UI Module Delivery")
     deliverable_description: Optional[str] = None
@@ -177,7 +170,6 @@ class DeliverableCreate(BaseModel):
 
 class DeliverableUpdate(BaseModel):
     deliverbale_name: Optional[str] = None
-    deliverable_id: str = Field(..., example="DEL-001")
     deliverable_description: Optional[str] = None
     priority: Optional[str] = None
     plan_start_date: Optional[datetime] = None
@@ -191,7 +183,7 @@ class DeliverableRead(DeliverableBase):
 
 
 # =====================================================
-# === Milestone Schemas ===
+# === Milestone Schemas (Based on PascalCase model) ===
 # =====================================================
 
 class MilestoneBase(BaseModel):
@@ -201,12 +193,15 @@ class MilestoneBase(BaseModel):
     Description: Optional[str] = None
     PlannedStartDate: Optional[date] = None
     PlannedEndDate: Optional[date] = None
-    CreatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-    UpdatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
+    CreatedAt: datetime = Field(default_factory=utcnow)
+    UpdatedAt: datetime = Field(default_factory=utcnow)
 
-class MilestoneCreate(MilestoneBase):
-    """Schema used for creating a new Milestone."""
-    pass
+class MilestoneCreate(BaseModel):
+    ProjectId: str = Field(..., example="PRJ-001")
+    Title: str = Field(..., example="Phase 1 Completion")
+    Description: Optional[str] = None
+    PlannedStartDate: Optional[date] = None
+    PlannedEndDate: Optional[date] = None
 
 class MilestoneUpdate(BaseModel):
     Title: Optional[str] = None
@@ -217,12 +212,11 @@ class MilestoneUpdate(BaseModel):
 
 
 class MilestoneRead(MilestoneBase):
-    """Schema used for reading Milestone data (response model)."""
-    model_config = ConfigDict(from_attributes=True) # ✅ Pydantic V2 FIX
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =====================================================
-# === Holiday Calendar Schemas ===
+# === Holiday Calendar Schemas (PascalCase model) ===
 # =====================================================
 
 class HolidayCalendarBase(BaseModel):
@@ -230,13 +224,14 @@ class HolidayCalendarBase(BaseModel):
     CalendarName: Optional[str] = Field(None, example="India Public Holidays")
     Description: Optional[str] = Field(None, example="All official holidays for India region")
     EntityStatus: Optional[str] = Field("Active", example="Active")
-    CreatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-    UpdatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
+    CreatedAt: datetime = Field(default_factory=utcnow)
+    UpdatedAt: datetime = Field(default_factory=utcnow)
 
 
-class HolidayCalendarCreate(HolidayCalendarBase):
-    """Used for creating a new Holiday Calendar."""
-    pass
+class HolidayCalendarCreate(BaseModel):
+    CalendarName: Optional[str] = None
+    Description: Optional[str] = None
+    EntityStatus: Optional[str] = "Active"
 
 class HolidayCalendarUpdate(BaseModel):
     CalendarName: Optional[str] = None
@@ -246,12 +241,11 @@ class HolidayCalendarUpdate(BaseModel):
 
 
 class HolidayCalendarRead(HolidayCalendarBase):
-    """Used for reading Holiday Calendar data (response model)."""
-    model_config = ConfigDict(from_attributes=True) # ✅ Pydantic V2 FIX
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =====================================================
-# === Holiday Schemas ===
+# === Holiday Schemas (PascalCase model) ===
 # =====================================================
 
 class HolidayBase(BaseModel):
@@ -259,13 +253,14 @@ class HolidayBase(BaseModel):
     HolidayCalendarId: str = Field(..., example="HC-001")
     Date: date = Field(..., example="2025-01-26")
     HolidayName: str = Field(..., example="Republic Day")
-    CreatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-    UpdatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
+    CreatedAt: datetime = Field(default_factory=utcnow)
+    UpdatedAt: datetime = Field(default_factory=utcnow)
 
 
-class HolidayCreate(HolidayBase):
-    """Used for creating a new Holiday entry."""
-    pass
+class HolidayCreate(BaseModel):
+    HolidayCalendarId: str = Field(..., example="HC-001")
+    Date: date = Field(..., example="2025-01-26")
+    HolidayName: str = Field(..., example="Republic Day")
 
 class HolidayUpdate(BaseModel):
     Date: Optional[date] = None
@@ -274,24 +269,24 @@ class HolidayUpdate(BaseModel):
 
 
 class HolidayRead(HolidayBase):
-    """Used for reading Holiday data (response model)."""
-    model_config = ConfigDict(from_attributes=True) # ✅ Pydantic V2 FIX
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =====================================================
-# === Role Master Schemas ===
+# === Role Master Schemas (PascalCase model) ===
 # =====================================================
 
 class RoleMasterBase(BaseModel):
     RoleId: str = Field(..., example="ROLE-001")
     RoleName: str = Field(..., example="Developer")
     Description: Optional[str] = None
-    CreatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-    UpdatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
+    CreatedAt: datetime = Field(default_factory=utcnow)
+    UpdatedAt: datetime = Field(default_factory=utcnow)
 
 
-class RoleMasterCreate(RoleMasterBase):
-    pass
+class RoleMasterCreate(BaseModel):
+    RoleName: str = Field(..., example="Developer")
+    Description: Optional[str] = None
 
 class RoleMasterUpdate(BaseModel):
     RoleName: Optional[str] = None
@@ -300,30 +295,34 @@ class RoleMasterUpdate(BaseModel):
 
 
 class RoleMasterRead(RoleMasterBase):
-    model_config = ConfigDict(from_attributes=True) # ✅ Pydantic V2 FIX
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =====================================================
-# === Employee Schemas ===
+# === Employee Schemas (PascalCase model) ===
 # =====================================================
 
 class EmployeeBase(BaseModel):
     EmployeeId: str = Field(..., example="EMP-001")
     FullName: str = Field(..., example="Alice Developer")
-    Email: Optional[str] = Field(None, example="alice@example.com")
+    Email: Optional[EmailStr] = Field(None, example="alice@example.com")
     BUId: Optional[str] = Field(None, example="BU-001")
     Status: Optional[str] = "Active"
     HolidayCalendarId: Optional[str] = Field(None, example="HC-001")
-    CreatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-    UpdatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
+    CreatedAt: datetime = Field(default_factory=utcnow)
+    UpdatedAt: datetime = Field(default_factory=utcnow)
 
 
-class EmployeeCreate(EmployeeBase):
-    pass
+class EmployeeCreate(BaseModel):
+    FullName: str = Field(..., example="Alice Developer")
+    Email: EmailStr = Field(..., example="alice@example.com")
+    BUId: Optional[str] = Field(None, example="BU-001")
+    Status: Optional[str] = "Active"
+    HolidayCalendarId: Optional[str] = None
 
 class EmployeeUpdate(BaseModel):
     FullName: Optional[str] = None
-    Email: Optional[str] = None
+    Email: Optional[EmailStr] = None
     BUId: Optional[str] = None
     Status: Optional[str] = None
     HolidayCalendarId: Optional[str] = None
@@ -331,11 +330,11 @@ class EmployeeUpdate(BaseModel):
 
 
 class EmployeeRead(EmployeeBase):
-    model_config = ConfigDict(from_attributes=True) # ✅ Pydantic V2 FIX
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =====================================================
-# === Employee Role Schemas ===
+# === Employee Role Schemas (PascalCase model) ===
 # =====================================================
 
 class EmployeeRoleBase(BaseModel):
@@ -345,12 +344,16 @@ class EmployeeRoleBase(BaseModel):
     Active: Optional[bool] = True
     AssignedDate: Optional[date] = None
     EntityStatus: Optional[str] = "Active"
-    CreatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-    UpdatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
+    CreatedAt: datetime = Field(default_factory=utcnow)
+    UpdatedAt: datetime = Field(default_factory=utcnow)
 
 
-class EmployeeRoleCreate(EmployeeRoleBase):
-    pass
+class EmployeeRoleCreate(BaseModel):
+    EmployeeId: str = Field(..., example="EMP-001")
+    RoleId: str = Field(..., example="ROLE-001")
+    Active: Optional[bool] = True
+    AssignedDate: Optional[date] = None
+    EntityStatus: Optional[str] = "Active"
 
 class EmployeeRoleUpdate(BaseModel):
     RoleId: Optional[str] = None
@@ -361,26 +364,30 @@ class EmployeeRoleUpdate(BaseModel):
 
 
 class EmployeeRoleRead(EmployeeRoleBase):
-    model_config = ConfigDict(from_attributes=True) # ✅ Pydantic V2 FIX
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =====================================================
-# === Certification Master Schemas ===
+# === Certification Master Schemas (PascalCase model) ===
 # =====================================================
 
 class CertificationMasterBase(BaseModel):
     CertificationId: str = Field(..., example="CERT-001")
     CertificationName: str = Field(..., example="AWS Developer Associate")
     SkillId: str = Field(..., example="SK-001")
-    IssuingAuthority: Optional[str] = Field(None, example="Amazon")
+    IssuingAuthority: Optional[str] = None
     ValidDurationDays: Optional[int] = None
     EntityStatus: Optional[str] = "Active"
-    CreatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-    UpdatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
+    CreatedAt: datetime = Field(default_factory=utcnow)
+    UpdatedAt: datetime = Field(default_factory=utcnow)
 
 
-class CertificationMasterCreate(CertificationMasterBase):
-    pass
+class CertificationMasterCreate(BaseModel):
+    CertificationName: str = Field(..., example="AWS Developer Associate")
+    SkillId: str = Field(..., example="SK-001")
+    IssuingAuthority: Optional[str] = None
+    ValidDurationDays: Optional[int] = None
+    EntityStatus: Optional[str] = "Active"
 
 class CertificationMasterUpdate(BaseModel):
     CertificationName: Optional[str] = None
@@ -392,11 +399,11 @@ class CertificationMasterUpdate(BaseModel):
 
 
 class CertificationMasterRead(CertificationMasterBase):
-    model_config = ConfigDict(from_attributes=True) # ✅ Pydantic V2 FIX
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =====================================================
-# === Employee Certification Schemas ===
+# === Employee Certification Schemas (PascalCase model) ===
 # =====================================================
 
 class EmployeeCertificationBase(BaseModel):
@@ -404,14 +411,18 @@ class EmployeeCertificationBase(BaseModel):
     EmployeeId: str = Field(..., example="EMP-001")
     CertificationId: str = Field(..., example="CERT-001")
     IssuedDate: Optional[date] = None
-    CertificationNumber: Optional[str] = Field(None, example="ABC123")
+    CertificationNumber: Optional[str] = None
     EntityStatus: Optional[str] = "Active"
-    CreatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-    UpdatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
+    CreatedAt: datetime = Field(default_factory=utcnow)
+    UpdatedAt: datetime = Field(default_factory=utcnow)
 
 
-class EmployeeCertificationCreate(EmployeeCertificationBase):
-    pass
+class EmployeeCertificationCreate(BaseModel):
+    EmployeeId: str = Field(..., example="EMP-001")
+    CertificationId: str = Field(..., example="CERT-001")
+    IssuedDate: Optional[date] = None
+    CertificationNumber: Optional[str] = None
+    EntityStatus: Optional[str] = "Active"
 
 class EmployeeCertificationUpdate(BaseModel):
     CertificationId: Optional[str] = None
@@ -422,25 +433,28 @@ class EmployeeCertificationUpdate(BaseModel):
 
 
 class EmployeeCertificationRead(EmployeeCertificationBase):
-    model_config = ConfigDict(from_attributes=True) # ✅ Pydantic V2 FIX
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =====================================================
-# === Skill Master Schemas ===
+# === Skill Master Schemas (PascalCase model) ===
 # =====================================================
 
 class SkillMasterBase(BaseModel):
     SkillId: str = Field(..., example="SK-001")
     SkillName: str = Field(..., example="Python")
-    SkillLevel: Optional[str] = Field(None, example="Expert")
+    SkillLevel: Optional[str] = None
     Description: Optional[str] = None
     EntityStatus: Optional[str] = "Active"
-    CreatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-    UpdatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
+    CreatedAt: datetime = Field(default_factory=utcnow)
+    UpdatedAt: datetime = Field(default_factory=utcnow)
 
 
-class SkillMasterCreate(SkillMasterBase):
-    pass
+class SkillMasterCreate(BaseModel):
+    SkillName: str = Field(..., example="Python")
+    SkillLevel: Optional[str] = None
+    Description: Optional[str] = None
+    EntityStatus: Optional[str] = "Active"
 
 class SkillMasterUpdate(BaseModel):
     SkillName: Optional[str] = None
@@ -451,11 +465,11 @@ class SkillMasterUpdate(BaseModel):
 
 
 class SkillMasterRead(SkillMasterBase):
-    model_config = ConfigDict(from_attributes=True) # ✅ Pydantic V2 FIX
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =====================================================
-# === Task Type Master Schemas ===
+# === Task Type Master Schemas (PascalCase model) ===
 # =====================================================
 
 class TaskTypeMasterBase(BaseModel):
@@ -463,12 +477,14 @@ class TaskTypeMasterBase(BaseModel):
     TaskTypeName: str = Field(..., example="Development")
     Description: Optional[str] = None
     EntityStatus: Optional[str] = "Active"
-    CreatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-    UpdatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
+    CreatedAt: datetime = Field(default_factory=utcnow)
+    UpdatedAt: datetime = Field(default_factory=utcnow)
 
 
-class TaskTypeMasterCreate(TaskTypeMasterBase):
-    pass
+class TaskTypeMasterCreate(BaseModel):
+    TaskTypeName: str = Field(..., example="Development")
+    Description: Optional[str] = None
+    EntityStatus: Optional[str] = "Active"
 
 class TaskTypeMasterUpdate(BaseModel):
     TaskTypeName: Optional[str] = None
@@ -478,13 +494,12 @@ class TaskTypeMasterUpdate(BaseModel):
 
 
 class TaskTypeMasterRead(TaskTypeMasterBase):
-    model_config = ConfigDict(from_attributes=True) # ✅ Pydantic V2 FIX
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =====================================================
-# === Task Schemas ===
+# === Task Schemas (Based on snake_case model) ===
 # =====================================================
-
 
 class TaskBase(BaseModel):
     # Mapping to Task model: task_id, deliverable_id, task_type_id, etc.
@@ -507,7 +522,6 @@ class TaskBase(BaseModel):
     createdby: Optional[str] = Field(None, example="USR-001")
 
 class TaskCreate(BaseModel):
-    task_id: str = Field(..., example="TASK-001")
     deliverable_id: str = Field(..., example="DEL-001")
     task_type_id: str = Field(..., example="TT-001")
     task_name: str = Field(..., example="Develop API Endpoint")
@@ -522,7 +536,6 @@ class TaskCreate(BaseModel):
     baseline_end_date: Optional[datetime] = None
 
 class TaskUpdate(BaseModel):
-    task_id: str = Field(..., example="TASK-001")
     task_name: Optional[str] = None
     task_description: Optional[str] = None
     assigne_id: Optional[str] = None
@@ -539,20 +552,21 @@ class TaskRead(TaskBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-
 # =====================================================
-# === Task Skill Requirement Schemas ===
+# === Task Skill Requirement Schemas (PascalCase model) ===
 # =====================================================
 
 class TaskSkillRequirementBase(BaseModel):
     TaskSkillRequirementId: str = Field(..., example="TSR-001")
-    TaskId: str = Field(..., example="TASK-001")
+    TaskId: str = Field(..., example="TASK-001") # FK: task.task_id (Using TaskId for consistency)
     SkillId: str = Field(..., example="SK-001")
     Importance: Optional[str] = Field(None, example="High")
 
 
-class TaskSkillRequirementCreate(TaskSkillRequirementBase):
-    pass
+class TaskSkillRequirementCreate(BaseModel):
+    TaskId: str = Field(..., example="TASK-001")
+    SkillId: str = Field(..., example="SK-001")
+    Importance: Optional[str] = None
 
 class TaskSkillRequirementUpdate(BaseModel):
     SkillId: Optional[str] = None
@@ -560,11 +574,11 @@ class TaskSkillRequirementUpdate(BaseModel):
 
 
 class TaskSkillRequirementRead(TaskSkillRequirementBase):
-    model_config = ConfigDict(from_attributes=True) # ✅ Pydantic V2 FIX
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =====================================================
-# === Feedback Category Master Schemas ===
+# === Feedback Category Master Schemas (PascalCase model) ===
 # =====================================================
 
 class FeedbackCategoryMasterBase(BaseModel):
@@ -572,34 +586,38 @@ class FeedbackCategoryMasterBase(BaseModel):
     CategoryName: str = Field(..., example="Code Quality")
 
 
-class FeedbackCategoryMasterCreate(FeedbackCategoryMasterBase):
-    pass
+class FeedbackCategoryMasterCreate(BaseModel):
+    CategoryName: str = Field(..., example="Code Quality")
 
 class FeedbackCategoryMasterUpdate(BaseModel):
     CategoryName: Optional[str] = None
 
 
 class FeedbackCategoryMasterRead(FeedbackCategoryMasterBase):
-    model_config = ConfigDict(from_attributes=True) # ✅ Pydantic V2 FIX
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =====================================================
-# === Review Schemas ===
+# === Review Schemas (PascalCase model) ===
 # =====================================================
 
 class ReviewBase(BaseModel):
     ReviewId: str = Field(..., example="REV-001")
     TaskId: str = Field(..., example="TASK-001")
     ReviewerId: str = Field(..., example="EMP-003")
-    Status: Optional[str] = Field("under review", example="under review")
+    Status: Optional[str] = Field("Under Review", example="Under Review") # Capitalized to match CheckConstraint
     VerdictDate: Optional[date] = None
     OverallComments: Optional[str] = None
-    CreatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-    UpdatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
+    CreatedAt: datetime = Field(default_factory=utcnow)
+    UpdatedAt: datetime = Field(default_factory=utcnow)
 
 
-class ReviewCreate(ReviewBase):
-    pass
+class ReviewCreate(BaseModel):
+    TaskId: str = Field(..., example="TASK-001")
+    ReviewerId: str = Field(..., example="EMP-003")
+    Status: Optional[str] = Field("Under Review", example="Under Review")
+    VerdictDate: Optional[date] = None
+    OverallComments: Optional[str] = None
 
 class ReviewUpdate(BaseModel):
     Status: Optional[str] = None
@@ -609,11 +627,11 @@ class ReviewUpdate(BaseModel):
 
 
 class ReviewRead(ReviewBase):
-    model_config = ConfigDict(from_attributes=True) # ✅ Pydantic V2 FIX
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =====================================================
-# === Review Discussion Thread Schemas ===
+# === Review Discussion Thread Schemas (PascalCase model) ===
 # =====================================================
 
 class ReviewDiscussionThreadBase(BaseModel):
@@ -621,14 +639,18 @@ class ReviewDiscussionThreadBase(BaseModel):
     ReviewId: str = Field(..., example="REV-001")
     CommenterId: str = Field(..., example="EMP-001")
     CommentRole: Optional[str] = Field("Reviewer", example="Reviewer")
-    RemarksText: Optional[str] = Field(None, example="Need to refactor module")
+    RemarksText: Optional[str] = None
     CommentDate: Optional[date] = None
-    CreatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-    UpdatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
+    CreatedAt: datetime = Field(default_factory=utcnow)
+    UpdatedAt: datetime = Field(default_factory=utcnow)
 
 
-class ReviewDiscussionThreadCreate(ReviewDiscussionThreadBase):
-    pass
+class ReviewDiscussionThreadCreate(BaseModel):
+    ReviewId: str = Field(..., example="REV-001")
+    CommenterId: str = Field(..., example="EMP-001")
+    CommentRole: Optional[str] = Field("Reviewer", example="Reviewer")
+    RemarksText: Optional[str] = None
+    CommentDate: Optional[date] = None
 
 class ReviewDiscussionThreadUpdate(BaseModel):
     CommentRole: Optional[str] = None
@@ -638,35 +660,35 @@ class ReviewDiscussionThreadUpdate(BaseModel):
 
 
 class ReviewDiscussionThreadRead(ReviewDiscussionThreadBase):
-    model_config = ConfigDict(from_attributes=True) # ✅ Pydantic V2 FIX
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =====================================================
-# === Review Discussion Comment Schemas ===
+# === Review Discussion Comment Schemas (PascalCase model) ===
 # =====================================================
 
 class ReviewDiscussionCommentBase(BaseModel):
     CommentId: str = Field(..., example="CMT-001")
-    DiscussionId: str = Field(..., example="DISC-001") # Corrected from ThreadId to DiscussionId per model
+    DiscussionId: str = Field(..., example="DISC-001")
     Comment: str = Field(..., example="Please fix variable naming convention.")
-    # Assuming CreatedAt/UpdatedAt are not in the model for this simple entity, otherwise add them here.
 
 
-class ReviewDiscussionCommentCreate(ReviewDiscussionCommentBase):
-    pass
+class ReviewDiscussionCommentCreate(BaseModel):
+    DiscussionId: str = Field(..., example="DISC-001")
+    Comment: str = Field(..., example="Please fix variable naming convention.")
 
 class ReviewDiscussionCommentUpdate(BaseModel):
     Comment: Optional[str] = None
 
 
 class ReviewDiscussionCommentRead(ReviewDiscussionCommentBase):
-    model_config = ConfigDict(from_attributes=True) # ✅ Pydantic V2 FIX
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =====================================================
-# === Audit Log Schemas ===
-# =====================================================
+# === Audit Log Schemas (Based on snake_case model) ===
 # NOTE: Audit logs are typically only created and read, not updated.
+# =====================================================
 
 class AuditLogBase(BaseModel):
     # Mapping to AuditLog model: audit_id, entity_type, entity_id, etc.
@@ -690,7 +712,7 @@ class AuditLogRead(AuditLogBase):
 
 
 # =====================================================
-# === Daily Status Schemas ===
+# === Daily Status Schemas (PascalCase model) ===
 # =====================================================
 
 class DailyStatusBase(BaseModel):
@@ -701,12 +723,17 @@ class DailyStatusBase(BaseModel):
     HoursSpent: Optional[float] = None
     Progress: Optional[float] = None
     Remarks: Optional[str] = None
-    CreatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-    UpdatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
+    CreatedAt: datetime = Field(default_factory=utcnow)
+    UpdatedAt: datetime = Field(default_factory=utcnow)
 
 
-class DailyStatusCreate(DailyStatusBase):
-    pass
+class DailyStatusCreate(BaseModel):
+    TaskId: str = Field(..., example="TASK-001")
+    EmployeeId: Optional[str] = None
+    WorkDate: date
+    HoursSpent: Optional[float] = None
+    Progress: Optional[float] = None
+    Remarks: Optional[str] = None
 
 class DailyStatusUpdate(BaseModel):
     HoursSpent: Optional[float] = None
@@ -715,236 +742,4 @@ class DailyStatusUpdate(BaseModel):
     UpdatedAt: datetime = Field(default_factory=utcnow)
 
 
-class DailyStatusRead(DailyStatusBase):
-    model_config = ConfigDict(from_attributes=True) # ✅ Pydantic V2 FIX
-
-
-# =====================================================
-# === Issue Schemas ===
-# =====================================================
-
-class IssueBase(BaseModel):
-    IssueId: str = Field(..., example="ISS-001")
-    TaskId: str = Field(..., example="TASK-001")
-    Title: str = Field(..., example="API Timeout Issue")
-    Description: Optional[str] = None
-    ActionOwnerId: Optional[str] = Field(None, example="EMP-001")
-    Priority: Optional[str] = Field(None, example="High")
-    Status: Optional[str] = Field(None, example="Open")
-    CreatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-    UpdatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-
-
-class IssueCreate(IssueBase):
-    pass
-
-class IssueUpdate(BaseModel):
-    Title: Optional[str] = None
-    Description: Optional[str] = None
-    ActionOwnerId: Optional[str] = None
-    Priority: Optional[str] = None
-    Status: Optional[str] = None
-    UpdatedAt: datetime = Field(default_factory=utcnow)
-
-
-class IssueRead(IssueBase):
-    model_config = ConfigDict(from_attributes=True) # ✅ Pydantic V2 FIX
-
-
-# =====================================================
-# === Issue Activity Schemas ===
-# =====================================================
-# NOTE: Issue activities are typically only created and read, not updated.
-
-class IssueActivityBase(BaseModel):
-    IssueActivityId: str = Field(..., example="IA-001")
-    IssueId: str = Field(..., example="ISS-001")
-    EmployeeId: Optional[str] = Field(None, example="EMP-002")
-    ActivityDate: Optional[datetime] = None
-    Status: Optional[str] = None
-    Remarks: Optional[str] = None
-    CreatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-
-
-class IssueActivityCreate(IssueActivityBase):
-    pass
-
-
-class IssueActivityRead(IssueActivityBase):
-    model_config = ConfigDict(from_attributes=True) # ✅ Pydantic V2 FIX
-
-
-# =====================================================
-# === Rating Attribute Master Schemas ===
-# =====================================================
-
-class RatingAttributeMasterBase(BaseModel):
-    AttributeId: str = Field(..., example="RA-001")
-    AttributeName: str = Field(..., example="Code Quality")
-    Description: Optional[str] = None
-    EntityStatus: Optional[str] = "Active"
-    CreatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-    UpdatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-
-
-class RatingAttributeMasterCreate(RatingAttributeMasterBase):
-    pass
-
-class RatingAttributeMasterUpdate(BaseModel):
-    AttributeName: Optional[str] = None
-    Description: Optional[str] = None
-    EntityStatus: Optional[str] = None
-    UpdatedAt: datetime = Field(default_factory=utcnow)
-
-
-class RatingAttributeMasterRead(RatingAttributeMasterBase):
-    model_config = ConfigDict(from_attributes=True) # ✅ Pydantic V2 FIX
-
-
-# =====================================================
-# === Delivery Rating Schemas ===
-# =====================================================
-
-class DeliveryRatingBase(BaseModel):
-    RatingId: str = Field(..., example="RAT-001")
-    TaskId: str = Field(..., example="TASK-001")
-    AttributeId: str = Field(..., example="RA-001")
-    RatedForId: str = Field(..., example="EMP-002")
-    RatedById: str = Field(..., example="EMP-003")
-    Score: float = Field(..., example=4.5)
-    Weight: Optional[float] = Field(None, example=1.0)
-    Remarks: Optional[str] = None
-    CreatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-    UpdatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-
-
-class DeliveryRatingCreate(DeliveryRatingBase):
-    pass
-
-
-class DeliveryRatingUpdate(BaseModel):
-    """Schema for updating an existing Delivery Rating. All fields are Optional."""
-    TaskId: Optional[str] = Field(None, example="TASK-001")
-    AttributeId: Optional[str] = Field(None, example="RA-001")
-    RatedForId: Optional[str] = Field(None, example="EMP-002")
-    RatedById: Optional[str] = Field(None, example="EMP-003")
-    Score: Optional[float] = Field(None, example=4.5)
-    Weight: Optional[float] = Field(None, example=1.0)
-    Remarks: Optional[str] = None
-    UpdatedAt: datetime = Field(default_factory=utcnow)
-
-
-class DeliveryRatingRead(DeliveryRatingBase):
-    model_config = ConfigDict(from_attributes=True) # ✅ Pydantic V2 FIX
-
-# ADDED ALIAS DeliveryRatingOut to fix router import error (Keep for compatibility)
-class DeliveryRatingOut(DeliveryRatingRead):
-    pass
-
-
-# =====================================================
-# === Employee Skill Schemas ===
-# =====================================================
-
-class EmployeeSkillBase(BaseModel):
-    EmployeeSkillId: str = Field(..., example="ES-001")
-    EmployeeId: str = Field(..., example="EMP-001")
-    SkillId: str = Field(..., example="SK-001")
-    IsPrimary: Optional[bool] = True
-    ExperienceYears: Optional[float] = None
-    EntityStatus: Optional[str] = "Active"
-    CreatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-    UpdatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-
-
-class EmployeeSkillCreate(EmployeeSkillBase):
-    pass
-
-class EmployeeSkillUpdate(BaseModel):
-    SkillId: Optional[str] = None
-    IsPrimary: Optional[bool] = None
-    ExperienceYears: Optional[float] = None
-    EntityStatus: Optional[str] = None
-    UpdatedAt: datetime = Field(default_factory=utcnow)
-
-
-class EmployeeSkillRead(EmployeeSkillBase):
-    model_config = ConfigDict(from_attributes=True) # ✅ Pydantic V2 FIX
-
-
-# =====================================================
-# === Employee Capacity Schemas ===
-# =====================================================
-
-class EmployeeCapacityBase(BaseModel):
-    EmployeeCapacityId: str = Field(..., example="ECAP-001")
-    EmployeeId: str = Field(..., example="EMP-001")
-    BUId: str = Field(..., example="BU-001")
-    CapacityHours: float = Field(..., example=8.0)
-    CapaCityDate: Optional[date] = None
-    CreatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-    UpdatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-
-
-class EmployeeCapacityCreate(EmployeeCapacityBase):
-    pass
-
-
-class EmployeeCapacityRead(EmployeeCapacityBase):
-    model_config = ConfigDict(from_attributes=True) # ✅ Pydantic V2 FIX
-
-# ADDED ALIAS EmployeeCapacityOut to fix router import error (Keep for compatibility)
-class EmployeeCapacityOut(EmployeeCapacityRead):
-    pass
-
-class EmployeeCapacityUpdate(BaseModel):
-    """
-    Schema for updating an existing Employee Capacity entry.
-    All fields are Optional as updates typically only contain fields being changed.
-    """
-    EmployeeId: Optional[str] = Field(None, example="EMP-001")
-    BUId: Optional[str] = Field(None, example="BU-001")
-    CapacityHours: Optional[float] = Field(None, example=7.0)
-    CapaCityDate: Optional[date] = None
-    UpdatedAt: datetime = Field(default_factory=utcnow)
-
-
-# =====================================================
-# === Employee Leave Schemas ===
-# =====================================================
-
-class EmployeeLeaveBase(BaseModel):
-    LeaveId: str = Field(..., example="LEV-001")
-    EmployeeId: str = Field(..., example="EMP-001")
-    LeaveDate: date
-    LeaveType: Optional[str] = Field(None, example="Sick Leave")
-    Reason: Optional[str] = None
-    ApprovedById: Optional[str] = Field(None, example="EMP-002")
-    Status: Optional[str] = Field("Pending", example="Pending")
-    CreatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-    UpdatedAt: datetime = Field(default_factory=utcnow) # Removed Optional[]
-
-
-class EmployeeLeaveCreate(EmployeeLeaveBase):
-    pass
-
-
-class EmployeeLeaveRead(EmployeeLeaveBase):
-    model_config = ConfigDict(from_attributes=True) # ✅ Pydantic V2 FIX
-
-# ADDED EmployeeLeaveOut to fix router import error (Keep for compatibility)
-class EmployeeLeaveOut(EmployeeLeaveRead):
-    pass
-
-class EmployeeLeaveUpdate(BaseModel):
-    """
-    Schema for updating an existing Employee Leave entry.
-    All fields are Optional to allow for partial updates.
-    """
-    EmployeeId: Optional[str] = Field(None, example="EMP-001")
-    LeaveDate: Optional[date] = None
-    LeaveType: Optional[str] = Field(None, example="Annual Leave")
-    Reason: Optional[str] = None
-    ApprovedById: Optional[str] = Field(None, example="EMP-002")
-    Status: Optional[str] = Field(None, example="Approved")
-    UpdatedAt: datetime = Field(default_factory=utcnow)
+class DailyStatusRead(DailyStatusBase
