@@ -13,14 +13,7 @@ from main import models
 
 from main.models import Base
 
-
-
-
-# Create tables (for development convenience)
-#Base.metadata.create_all(bind=engine)
-
 openapi_tags = [
-    {"name": "User", "description": "Operations related to system users"},
     {"name": "BusinessUnit", "description": "Manage business units"},
     {"name": "Project", "description": "Create and manage projects"},
     {"name": "Deliverable", "description": "Track project deliverables"},
@@ -49,22 +42,17 @@ openapi_tags = [
     {"name": "DeliveryRating", "description": "Manage ratings for deliverables"},
     {"name":"RatingAttributeMaster","description":"Rating of the delivery rating"},
     {"name":"DailyStatus","description":"Status of employee they are working on task"},
-
-
 ]
-
 
 # FastAPI app instance
 app = FastAPI(
     title="Delivery Tracker API",
     description="Simple API for managing delivery tracker tables.",
-    version="vFinal18",
+    version="v1.0",
     openapi_tags=openapi_tags
 )
-#app.include_router(user.router, prefix="/user")  # This matters
 
 # Include routers with matching tags
-app.include_router(user.router,prefix="/user",tags=["User"])
 app.include_router(businessunit.router, prefix="/api/BusinessUnit", tags=["BusinessUnit"])
 app.include_router(project.router, prefix="/api/Projects", tags=["Project"])
 app.include_router(milestone.router, prefix="/api/Milestones", tags=["Milestone"])
@@ -97,4 +85,4 @@ app.include_router(rating_attribute_master.router,prefix="/api/RatingAttributeMa
 # Root endpoint
 @app.get("/")
 def root():
-    return {"message": "Delivery Tracker API (vFinal18) - running"}
+    return {"message": "Delivery Tracker API (v1.0) - running"}
