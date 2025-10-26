@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from main.database import engine
 from routers import ( 
     employee, businessunit, project, deliverable,
-    task, tasktypemaster, task_status,
+    task, task_type, task_status,
     issue, issue_activity, auditlog)
 
 from main import models
@@ -13,8 +13,8 @@ openapi_tags = [
     {"name": "Project", "description": "Create and manage projects"},
     {"name": "Deliverable", "description": "Track project deliverables"},
     {"name": "Task", "description": "Create and assign tasks"},
-    {"name": "TaskTypeMaster", "description": "Types of tasks"},
-    {"name":"DailyStatus","description":"Status of employee they are working on task"},
+    {"name": "TaskType", "description": "Types of tasks"},
+    {"name":"TaskStatus","description":"Status of employee they are working on task"},
     {"name": "Issue", "description": "Track issues related to deliverables"},
     {"name": "IssueActivity", "description": "Track activities on issues"},
     {"name": "AuditLog", "description": "System audit logs"}
@@ -29,34 +29,16 @@ app = FastAPI(
 )
 
 # Include routers with matching tags
+app.include_router(employee.router, prefix="/api/Employees", tags=["Employee"])
 app.include_router(businessunit.router, prefix="/api/BusinessUnit", tags=["BusinessUnit"])
 app.include_router(project.router, prefix="/api/Projects", tags=["Project"])
-app.include_router(milestone.router, prefix="/api/Milestones", tags=["Milestone"])
 app.include_router(deliverable.router, prefix="/api/Deliverables", tags=["Deliverable"])
+app.include_router(task.router, prefix="/api/Tasks", tags=["Task"])
+app.include_router(task_type.router, prefix="/api/Task-Type", tags=["TaskType"])
+app.include_router(task_status.router,prefix="/api/Task-Status",tags=["TaskStatus"])
 app.include_router(issue.router, prefix="/api/Issues", tags=["Issue"])
 app.include_router(issue_activity.router, prefix="/api/IssueActivities", tags=["IssueActivity"])
-app.include_router(holidaycalendar.router, prefix="/api/HolidayCalendars", tags=["HolidayCalendar"])
-app.include_router(holiday.router,prefix="/api/Holidays", tags=["Holiday"]),
-app.include_router(rolemaster.router, prefix="/api/Roles", tags=["RoleMaster"])
-app.include_router(employee.router, prefix="/api/Employees", tags=["Employee"])
-app.include_router(employeerole.router, prefix="/api/EmployeeRoles", tags=["EmployeeRole"])
-app.include_router(employee_skill.router, prefix="/api/EmployeeSkills", tags=["EmployeeSkill"])
-app.include_router(certificationmaster.router, prefix="/api/Certifications", tags=["CertificationMaster"])
-app.include_router(employeecertification.router, prefix="/api/Employee-Certifications", tags=["EmployeeCertification"])
-app.include_router(skillmaster.router, prefix="/api/Skills", tags=["SkillMaster"])
-app.include_router(tasktypemaster.router, prefix="/api/Task-Types", tags=["TaskTypeMaster"])
-app.include_router(task.router, prefix="/api/Tasks", tags=["Task"])
-app.include_router(taskskillrequirement.router, prefix="/api/Task-Skill-Reqs", tags=["TaskSkillRequirement"])
-app.include_router(feedbackcategorymaster.router, prefix="/api/Feedback-Categories", tags=["FeedbackCategoryMaster"])
-app.include_router(review.router, prefix="/api/Reviews", tags=["Review"])
-app.include_router(reviewdiscussionthread.router, prefix="/api/Review-Threads", tags=["ReviewDiscussionThread"])
-app.include_router(reviewdiscussioncomment.router, prefix="/api/Review-Comments", tags=["ReviewDiscussionComment"])
-app.include_router(delivery_rating.router, prefix="/api/DeliveryRatings", tags=["DeliveryRating"])
-app.include_router(employee_capacity.router, prefix="/api/EmployeeCapacities", tags=["EmployeeCapacity"])
-app.include_router(employee_leave.router, prefix="/api/EmployeeLeaves", tags=["EmployeeLeave"])
 app.include_router(auditlog.router, prefix="/api/Audit", tags=["AuditLog"])
-app.include_router(daily_status.router,prefix="/api/DailyStatus",tags=["DailyStatus"])
-app.include_router(rating_attribute_master.router,prefix="/api/RatingAttributeMaster",tags=["RatingAttributeMaster"])
 
 # Root endpoint
 @app.get("/")
