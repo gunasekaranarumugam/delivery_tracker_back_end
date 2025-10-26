@@ -1,45 +1,23 @@
 from fastapi import FastAPI
 from main.database import engine
 from routers import ( 
-    businessunit, project, deliverable, holidaycalendar,
-    rolemaster, employee, employeerole,
-    certificationmaster, employeecertification,
-    skillmaster, tasktypemaster, task, taskskillrequirement,
-    feedbackcategorymaster, review, reviewdiscussionthread, reviewdiscussioncomment,daily_status,
-    auditlog, milestone, issue, issue_activity, delivery_rating, employee_capacity, employee_leave,rating_attribute_master,holiday,employee_skill
-)
+    employee, businessunit, project, deliverable,
+    task, tasktypemaster, task_status,
+    issue, issue_activity, auditlog)
 
 from main import models
 
 openapi_tags = [
+    {"name": "Employee", "description": "Manage employee records"},
     {"name": "BusinessUnit", "description": "Manage business units"},
     {"name": "Project", "description": "Create and manage projects"},
     {"name": "Deliverable", "description": "Track project deliverables"},
-    {"name": "Holiday","description":"Holidays for employees"},
-    {"name": "HolidayCalendar", "description": "Manage holiday calendar"},
-    {"name": "RoleMaster", "description": "User role definitions"},
-    {"name": "Employee", "description": "Manage employee records"},
-    {"name": "EmployeeRole", "description": "Manage employee with their roles"},
-    {"name": "EmployeeSkill","description":"Manage employee with thier skills"},
-    {"name": "CertificationMaster", "description": "Manage certification types"},
-    {"name": "EmployeeCertification", "description": "Assign certifications to employees"},
-    {"name": "SkillMaster", "description": "Define and manage skills"},
-    {"name": "TaskTypeMaster", "description": "Types of tasks"},
     {"name": "Task", "description": "Create and assign tasks"},
-    {"name": "TaskSkillRequirement", "description": "Skill requirements for tasks"},
-    {"name": "FeedbackCategoryMaster", "description": "Categories for feedback"},
-    {"name": "Review", "description": "Review project deliverables"},
-    {"name": "ReviewDiscussionThread", "description": "Discussion threads in reviews"},
-    {"name": "ReviewDiscussionComment", "description": "Comments on review discussions"},
-    {"name": "AuditLog", "description": "System audit logs"},
-    {"name": "Milestone", "description": "Manage project milestones"},
+    {"name": "TaskTypeMaster", "description": "Types of tasks"},
+    {"name":"DailyStatus","description":"Status of employee they are working on task"},
     {"name": "Issue", "description": "Track issues related to deliverables"},
     {"name": "IssueActivity", "description": "Track activities on issues"},
-    {"name": "EmployeeCapacity", "description": "Manage employee capacity records"},
-    {"name": "EmployeeLeave", "description": "Manage employee leave records"},
-    {"name": "DeliveryRating", "description": "Manage ratings for deliverables"},
-    {"name":"RatingAttributeMaster","description":"Rating of the delivery rating"},
-    {"name":"DailyStatus","description":"Status of employee they are working on task"},
+    {"name": "AuditLog", "description": "System audit logs"}
 ]
 
 # FastAPI app instance
