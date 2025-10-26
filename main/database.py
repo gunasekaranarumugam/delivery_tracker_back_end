@@ -14,19 +14,11 @@ db_password = os.environ.get("DB_PASSWORD")
 db_host = os.environ.get("DB_HOST")
 db_name = os.environ.get("DB_NAME")
 
-print("DB_USER:", db_user)
-print("DB_PASSWORD:", db_password)
-print("DB_HOST:", db_host)
-print("DB_NAME:", db_name)
-
-
-
 # Construct the database URL
-SQLALCHEMY_DATABASE_URL = f"mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}"
-print("Final connection URL:", SQLALCHEMY_DATABASE_URL)
+DATABASE_URL = f"mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}"
 
 # Create SQLAlchemy engine and session
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
+engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # ✅ DO NOT redefine Base here — it comes from models
