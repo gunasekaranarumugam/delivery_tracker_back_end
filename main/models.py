@@ -11,7 +11,6 @@ Base = declarative_base()
 def now():
     return datetime.datetime.utcnow()
 
-
 class Employee(Base):
     __tablename__ = "employee"
     employee_id = Column(String(10), primary_key=True, index=True)

@@ -21,7 +21,6 @@ engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-
 # Dependency for FastAPI routes
 def get_db():
     db = SessionLocal()
