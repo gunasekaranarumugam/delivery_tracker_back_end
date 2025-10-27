@@ -19,7 +19,7 @@ phases:
       - docker push 294253399473.dkr.ecr.us-east-1.amazonaws.com/delivery-tracker-back-end-development:latest
       - echo Push is completed
       - echo writing image definition file ...
-      - printf '[{"name":"delivery-tracker-back-end-development-cluster","imageUri":"294253399473.dkr.ecr.us-east-1.amazonaws.com/delivery-tracker-back-end-development"}]' > imagedefinitions.json
+      - printf '[{"name":"delivery-tracker-back-end-development-container","imageUri":"294253399473.dkr.ecr.us-east-1.amazonaws.com/delivery-tracker-back-end-development"}]' > imagedefinitions.json
 
 
 artifacts:
