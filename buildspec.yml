@@ -9,7 +9,7 @@ phases:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...
-      - docker build -t delivery-tracker-back-end-development:latest .
+      - docker build -t delivery-tracker-back-end-development .
       - docker tag delivery_tracker:latest 294253399473.dkr.ecr.us-east-1.amazonaws.com/delivery-tracker-back-end-development:latest
 
   post_build:
