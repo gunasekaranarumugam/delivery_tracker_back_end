@@ -286,6 +286,12 @@ class TaskTypeMasterRead(TaskTypeMasterBase):
     task_type_name: str
     task_type_description:str
 
+class TaskTypeMasterCreate(TaskTypeMasterBase):
+    pass
+
+class TaskTypeMasterRead(TaskTypeMasterBase):
+    pass
+
 # =====================================================
 # === Task Status Schemas ===
 # =====================================================
