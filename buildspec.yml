@@ -9,17 +9,17 @@ phases:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...
-      - docker build -t delivery-tracker-back-end-main:latest .
-      - docker tag delivery_tracker:latest 294253399473.dkr.ecr.us-east-1.amazonaws.com/delivery-tracker-back-end-main:latest
+      - docker build -t delivery-tracker-back-end-development:latest .
+      - docker tag delivery_tracker:latest 294253399473.dkr.ecr.us-east-1.amazonaws.com/delivery-tracker-back-end-development:latest
 
   post_build:
     commands:
       - echo Build completed on `date`
       - echo Pushing the Docker image...
-      - docker push 294253399473.dkr.ecr.us-east-1.amazonaws.com/delivery-tracker-back-end-main:latest
+      - docker push 294253399473.dkr.ecr.us-east-1.amazonaws.com/delivery-tracker-back-end-development:latest
       - echo Push is completed
       - echo writing image definition file ...
-      - printf '[{"name":"delivery-tracker-back-end-development-cluster","imageUri":"294253399473.dkr.ecr.us-east-1.amazonaws.com/delivery-tracker-back-end-main"}]' > imagedefinitions.json
+      - printf '[{"name":"delivery-tracker-back-end-development-cluster","imageUri":"294253399473.dkr.ecr.us-east-1.amazonaws.com/delivery-tracker-back-end-development"}]' > imagedefinitions.json
 
 
 artifacts:
