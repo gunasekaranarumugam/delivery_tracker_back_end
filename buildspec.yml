@@ -1,26 +1,33 @@
 version: 0.2
 
+env:
+  variables:
+    AWS_DEFAULT_REGION: ap-south-1
+    AWS_ACCOUNT_ID: 294253399473
+    IMAGE_REPO_NAME: delivery-tracker-back-end-development
+    ENVIRONMENT: dev
+
 phases:
   pre_build:
     commands:
-      - echo Logging in to Amazon ECR...
-      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 294253399473.dkr.ecr.ap-south-1.amazonaws.com
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - CODEBUILD_ID=$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - GITCOMMIT_ID=$(echo "${CODEBUILD_ID}" | head -c8)
+      - TAG_ID="${ENVIRONMENT}-delivery-tracker-${GITCOMMIT_ID}"
+      - echo "Image tag: $TAG_ID"
+
   build:
     commands:
-      - echo Build started on `date`
-      - echo Building the Docker image...
-      - docker build -t delivery-tracker-back-end-development:latest .
-      - docker tag delivery-tracker-back-end-development:latest 294253399473.dkr.ecr.ap-south-1.amazonaws.com/delivery-tracker-back-end-development:latest
+      - docker build -t $IMAGE_REPO_NAME:$TAG_ID .
+      - docker tag $IMAGE_REPO_NAME:$TAG_ID $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$TAG_ID
+      - docker tag $IMAGE_REPO_NAME:$TAG_ID $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest
 
   post_build:
     commands:
-      - echo Build completed on `date`
-      - echo Pushing the Docker image...
-      - docker push 294253399473.dkr.ecr.ap-south-1.amazonaws.com/delivery-tracker-back-end-development:latest
-      - echo Push is completed
-      - echo writing image definition file ...
-      - printf '[{"name":"delivery-tracker-back-end-development-container","imageUri":"294253399473.dkr.ecr.ap-south-1.amazonaws.com/delivery-tracker-back-end-development:latest"}]' > imagedefinitions.json
-
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$TAG_ID
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest
+      - printf '[{"name":"delivery-tracker-back-end-development-container","imageUri":"%s.dkr.ecr.%s.amazonaws.com/%s:%s"}]' \
+          $AWS_ACCOUNT_ID $AWS_DEFAULT_REGION $IMAGE_REPO_NAME $TAG_ID > imagedefinitions.json
 
 artifacts:
   files:
