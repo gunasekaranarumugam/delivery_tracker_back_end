@@ -5,13 +5,13 @@ from main.models import Base
 import os
 from dotenv import load_dotenv
 
-#load_dotenv()
+load_dotenv()
 
 # --- MySQL connection details ---
-db_user = "admin"
-db_password = "wtjS(fR35oT-<oObw5G#q-L|3c(a"
-db_host = "delivery-tracker-db.c38wmw064mzj.ap-south-1.rds.amazonaws.com"  # e.g., "localhost" or a server IP
-db_name = "delivery_tracker_dev"
+db_user = os.environ.get('db_user')
+db_password = os.environ.get('db_password')
+db_host = os.environ.get('db_host')
+db_name = os.environ.get('db_name')
 
 # Construct the database URL
 DATABASE_URL = f"mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}"
