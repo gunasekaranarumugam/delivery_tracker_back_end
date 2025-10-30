@@ -20,8 +20,6 @@ phases:
       - echo Push is completed
       - echo writing image definition file ...
       - printf '[{"name":"delivery-tracker-back-end-development-container","imageUri":"294253399473.dkr.ecr.ap-south-1.amazonaws.com/delivery-tracker-back-end-development:latest"}]' > imagedefinitions.json
-      - echo "Deploying latest image to ECS..."
-      - aws ecs update-service --cluster delivery-tracker-back-end-development-cluster --service deliveru-tracker-back-end-development-service-brx31uyi --force-new-deployment
 
 
 artifacts:
