@@ -6,8 +6,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.types import DECIMAL, Numeric
 import datetime
 
-
-
 Base = declarative_base()
 
 def now():
@@ -317,7 +315,7 @@ class IssueView(Base):
 class IssueActivity(Base):
     __tablename__ = "issue_activity"
     issue_activity_id = Column(String(10), primary_key=True, index=True)
-    issueId = Column(String(10))
+    issue_id = Column(String(10))
     comment_by = Column(String(10))
     comment_at = Column(DateTime, default=now)
     comment = Column(String(4000))
