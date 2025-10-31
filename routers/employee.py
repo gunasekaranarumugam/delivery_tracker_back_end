@@ -45,7 +45,7 @@ def list_employees(db: Session = Depends(get_db)):
 
 @router.get("/{id}", response_model=schemas.EmployeeRead)
 def get_employee(id: str, db: Session = Depends(get_db)):
-    return db.query(models.Employee).filter(models.Employee.employee_id == id).first()
+    return db.query(models.EmployeeView).filter(models.EmployeeView.employee_id == id).first()
 
 
 @router.put("/{id}", response_model=schemas.EmployeeRead)
