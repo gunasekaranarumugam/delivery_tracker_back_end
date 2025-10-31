@@ -18,7 +18,6 @@ class Employee(Base):
     employee_email_address = Column(String(100))
     password = Column(String(100))
     business_unit_id = Column(String(10)) 
-  # Change nullable=False to nullable=True
     created_at = Column(DateTime, default=now)
     created_by = Column(String(10))
     updated_at = Column(DateTime, default=now)
