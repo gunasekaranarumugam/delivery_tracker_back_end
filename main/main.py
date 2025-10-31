@@ -8,7 +8,7 @@ from routers import (
 
 from main import models
 
-Base.metadata.create_all(bind=engine)
+#Base.metadata.create_all(bind=engine)
 
 openapi_tags = [
     {"name": "Employee", "description": "Manage employee records"},
