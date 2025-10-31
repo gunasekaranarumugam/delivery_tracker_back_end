@@ -25,6 +25,22 @@ class EmployeeBase(BaseModel):
     updated_by: str
     entity_status: str
 
+class EmployeeViewBase(BaseModel):
+    business_unit_id: str
+    business_unit_name: str
+    business_unit_head_id: str
+    business_unit_head_name: str
+    employee_id: str
+    employee_full_name: str
+    employee_email_address: str
+    created_at: datetime = Field(default_factory=now)
+    created_by: str
+    created_by_name: str
+    updated_at: datetime = Field(default_factory=now)
+    updated_by: str
+    updated_by_name: str
+    entity_status: str
+    
 class EmployeeCreateAdmin(BaseModel):
     employee_id : str
     employee_full_name: str
@@ -38,7 +54,7 @@ class EmployeeRegister(BaseModel):
     password: str
     business_unit_id: str
 
-class EmployeeRead(EmployeeBase):
+class EmployeeRead(EmployeeViewBase):
     class Config:
         orm_mode = True
 
