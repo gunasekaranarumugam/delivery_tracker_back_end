@@ -27,6 +27,23 @@ class Employee(Base):
     updated_by = Column(String(10))
     entity_status = Column(String(10), default="Active")
 
+class EmployeeView(Base):
+    __tablename__ = "vw_employee"
+    business_unit_id = Column(String(10))
+    business_unit_name = Column(String(100))
+    business_unit_head_id= Column(String(10)) 
+    business_unit_head_name= Column(String(100)) 
+    employee_id = Column(String(10), primary_key=True, index=True)
+    employee_full_name = Column(String(100))
+    employee_email_address = Column(String(100))
+    created_at = Column(DateTime, default=now)
+    created_by = Column(String(10))
+    created_by_name = Column(String(100))
+    updated_at = Column(DateTime, default=now)
+    updated_by = Column(String(10))
+    updated_by_name = Column(String(100))
+    entity_status = Column(String(10), default="Active")
+
 class BusinessUnit(Base):
     __tablename__ = "business_unit"
     business_unit_id = Column(String(10), primary_key=True, index=True)
@@ -37,6 +54,21 @@ class BusinessUnit(Base):
     created_by = Column(String(10))
     updated_at = Column(DateTime, default=now)
     updated_by = Column(String(10))
+    entity_status = Column(String(10), default="Active")
+
+class BusinessUnitView(Base):
+    __tablename__ = "vw_business_unit"
+    business_unit_id = Column(String(10), primary_key=True, index=True)
+    business_unit_name = Column(String(100))  
+    business_unit_description = Column(String(4000))
+    business_unit_head_id= Column(String(10))
+    business_unit_head_name= Column(String(100)) 
+    created_at = Column(DateTime, default=now)
+    created_by = Column(String(10))
+    created_by_name = Column(String(100))
+    updated_at = Column(DateTime, default=now)
+    updated_by = Column(String(10))
+    updated_by_name = Column(String(100))
     entity_status = Column(String(10), default="Active")
     
 class Project(Base):
@@ -55,6 +87,29 @@ class Project(Base):
     updated_at = Column(DateTime, default=now)
     updated_by = Column(String(10))
     entity_status = Column(String(10), default="Active")
+
+class ProjectView(Base):
+    __tablename__ = "vw_project"
+    business_unit_id = Column(String(10), primary_key=True, index=True)
+    business_unit_name = Column(String(100))  
+    business_unit_head_id= Column(String(10))
+    business_unit_head_name= Column(String(100)) 
+    project_id = Column(String(10),primary_key=True,index=True)
+    project_name = Column(String(100))
+    project_description = Column(String(4000))
+    delivery_manager_id = Column(String(10))
+    delivery_manager_name = Column(String(100))
+    baseline_start_date = Column(DateTime,default=now) 
+    baseline_end_date = Column(DateTime,default=now)
+    planned_start_date = Column(DateTime,default=now)
+    planned_end_date = Column(DateTime,default=now) 
+    created_at = Column(DateTime, default=now)
+    created_by = Column(String(10))
+    created_by_name = Column(String(100))
+    updated_at = Column(DateTime, default=now)
+    updated_by = Column(String(10))
+    updated_by_name = Column(String(100))
+    entity_status = Column(String(10), default="Active")
     
 class Deliverable(Base): 
     __tablename__ = "deliverable"
@@ -71,6 +126,32 @@ class Deliverable(Base):
     created_by = Column(String(10))
     updated_at = Column(DateTime, default=now)
     updated_by = Column(String(10))
+    entity_status = Column(String(10), default="Active")
+
+class DeliverableView(Base): 
+    __tablename__ = "vw_deliverable"
+    business_unit_id = Column(String(10), primary_key=True, index=True)
+    business_unit_name = Column(String(100))  
+    business_unit_head_id= Column(String(10))
+    business_unit_head_name= Column(String(100)) 
+    project_id = Column(String(10),primary_key=True,index=True)
+    project_name = Column(String(100))
+    delivery_manager_id = Column(String(10))
+    delivery_manager_name = Column(String(100))
+    deliverable_id = Column(String(10),primary_key=True,index=True)
+    deliverable_name = Column(String(100))
+    deliverable_description = Column(String(4000))
+    priority = Column(String(100))
+    baseline_start_date = Column(DateTime,default=now)
+    baseline_end_date = Column(DateTime,default=now)
+    planned_start_date = Column(DateTime,default=now)
+    planned_end_date = Column(DateTime,default=now) 
+    created_at = Column(DateTime, default=now)
+    created_by = Column(String(10))
+    created_by_name = Column(String(100))
+    updated_at = Column(DateTime, default=now)
+    updated_by = Column(String(10))
+    updated_by_name = Column(String(100))
     entity_status = Column(String(10), default="Active")
 
 class Task(Base): 
@@ -94,6 +175,41 @@ class Task(Base):
     updated_by = Column(String(10))
     entity_status = Column(String(10), default="Active")
 
+class TaskView(Base): 
+    __tablename__ = "vw_task"
+    business_unit_id = Column(String(10), primary_key=True, index=True)
+    business_unit_name = Column(String(100))  
+    business_unit_head_id= Column(String(10))
+    business_unit_head_name= Column(String(100)) 
+    project_id = Column(String(10),primary_key=True,index=True)
+    project_name = Column(String(100))
+    delivery_manager_id = Column(String(10))
+    delivery_manager_name = Column(String(100))
+    deliverable_id = Column(String(10),primary_key=True,index=True)
+    deliverable_name = Column(String(100))
+    task_id = Column(String(10), primary_key=True, index=True)
+    task_name = Column(String(100))
+    task_description = Column(String(4000)) 
+    task_type_id = Column(String(10)) 
+    task_type_name = Column(String(100))
+    priority = Column(String(100))
+    baseline_start_date = Column(DateTime,default=now) 
+    baseline_end_date = Column(DateTime,default=now)
+    planned_start_date = Column(DateTime,default=now)
+    planned_end_date = Column(DateTime,default=now)
+    effort_estimated_in_hours = Column(String(10))
+    assignee_id = Column(String(10))
+    assignee_name = Column(String(100))
+    reviewer_id = Column(String(10)) 
+    reviewer_name = Column(String(100)) 
+    created_at = Column(DateTime, default=now)
+    created_by = Column(String(10))
+    created_by_name = Column(String(100))
+    updated_at = Column(DateTime, default=now)
+    updated_by = Column(String(10))
+    updated_by_name = Column(String(100))
+    entity_status = Column(String(10), default="Active")
+
 class TaskType(Base):
     __tablename__ = "task_type"
     task_type_id = Column(String(10), primary_key=True, index=True)
@@ -103,6 +219,19 @@ class TaskType(Base):
     created_by = Column(String(10))
     updated_at = Column(DateTime, default=now)
     updated_by = Column(String(10))
+    entity_status = Column(String(10), default="Active")
+
+class TaskTypeView(Base):
+    __tablename__ = "vw_task_type"
+    task_type_id = Column(String(10), primary_key=True, index=True)
+    task_type_Name = Column(String(100))
+    task_type_description = Column(String(4000))
+    created_at = Column(DateTime, default=now)
+    created_by = Column(String(10))
+    created_by_name = Column(String(100))
+    updated_at = Column(DateTime, default=now)
+    updated_by = Column(String(10))
+    updated_by_name = Column(String(100))
     entity_status = Column(String(10), default="Active")
 
 class TaskStatus(Base):
@@ -115,6 +244,30 @@ class TaskStatus(Base):
     remarks = Column(String(4000))
     created_at = Column(DateTime, default=now)
     created_by = Column(String(10))
+    entity_status = Column(String(10), default="Active")
+
+class TaskStatusView(Base):
+    __tablename__ = "vw_task_status"
+    business_unit_id = Column(String(10), primary_key=True, index=True)
+    business_unit_name = Column(String(100))  
+    business_unit_head_id= Column(String(10))
+    business_unit_head_name= Column(String(100)) 
+    project_id = Column(String(10),primary_key=True,index=True)
+    project_name = Column(String(100))
+    delivery_manager_id = Column(String(10))
+    delivery_manager_name = Column(String(100))
+    deliverable_id = Column(String(10),primary_key=True,index=True)
+    deliverable_name = Column(String(100))
+    task_id = Column(String(10), primary_key=True, index=True)
+    task_name = Column(String(100))
+    task_status_id = Column(String(10), primary_key=True, index=True)
+    action_date = Column(Date)
+    hours_spent = Column(String(10))
+    progress = Column(String(10))
+    remarks = Column(String(4000))
+    created_at = Column(DateTime, default=now)
+    created_by = Column(String(10))
+    created_by_name = Column(String(100))
     entity_status = Column(String(10), default="Active")
 
 class Issue(Base):
@@ -132,6 +285,35 @@ class Issue(Base):
     updated_by = Column(String(10))
     entity_status = Column(String(10), default="Active")
 
+class IssueView(Base):
+    __tablename__ = "vw_issue"
+    business_unit_id = Column(String(10), primary_key=True, index=True)
+    business_unit_name = Column(String(100))  
+    business_unit_head_id= Column(String(10))
+    business_unit_head_name= Column(String(100)) 
+    project_id = Column(String(10),primary_key=True,index=True)
+    project_name = Column(String(100))
+    delivery_manager_id = Column(String(10))
+    delivery_manager_name = Column(String(100))
+    deliverable_id = Column(String(10),primary_key=True,index=True)
+    deliverable_name = Column(String(100))
+    task_id = Column(String(10), primary_key=True, index=True)
+    task_name = Column(String(100))
+    issue_id = Column(String(10), primary_key=True, index=True)
+    issue_title = Column(String(100))
+    issue_description = Column(String(4000))
+    priority = Column(String(100))
+    status = Column(String(100))
+    action_owner_id = Column(String(10))
+    action_owner_name = Column(String(100))
+    created_at = Column(DateTime, default=now)
+    created_by = Column(String(10))
+    created_by_name = Column(String(100))
+    updated_at = Column(DateTime, default=now)
+    updated_by = Column(String(10))
+    updated_by_name = Column(String(100))
+    entity_status = Column(String(10), default="Active")
+
 class IssueActivity(Base):
     __tablename__ = "issue_activity"
     issue_activity_id = Column(String(10), primary_key=True, index=True)
@@ -143,6 +325,34 @@ class IssueActivity(Base):
     updated_at = Column(DateTime, default=now)
     updated_by = Column(String(10))
     created_at = Column(DateTime, default=now)
+    entity_status = Column(String(10), default="Active")
+
+class IssueActivityView(Base):
+    __tablename__ = "vw_issue_activity"
+    business_unit_id = Column(String(10), primary_key=True, index=True)
+    business_unit_name = Column(String(100))  
+    business_unit_head_id= Column(String(10))
+    business_unit_head_name= Column(String(100)) 
+    project_id = Column(String(10),primary_key=True,index=True)
+    project_name = Column(String(100))
+    delivery_manager_id = Column(String(10))
+    delivery_manager_name = Column(String(100))
+    deliverable_id = Column(String(10),primary_key=True,index=True)
+    deliverable_name = Column(String(100))
+    task_id = Column(String(10), primary_key=True, index=True)
+    task_name = Column(String(100))
+    issue_id = Column(String(10), primary_key=True, index=True)
+    issue_activity_id = Column(String(10), primary_key=True, index=True)
+    comment_by = Column(String(10))
+    comment_by_name = Column(String(100))
+    comment_at = Column(DateTime, default=now)
+    comment = Column(String(4000))
+    created_at = Column(DateTime, default=now)
+    created_by = Column(String(10))
+    created_by_name = Column(String(100))
+    updated_at = Column(DateTime, default=now)
+    updated_by = Column(String(10))
+    updated_by_name = Column(String(100))
     entity_status = Column(String(10), default="Active")
 
 class AuditLog(Base): 
