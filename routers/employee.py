@@ -40,7 +40,7 @@ def create_employee(payload: schemas.EmployeeRegister, db: Session = Depends(get
 
 @router.get("/", response_model=List[schemas.EmployeeRead])
 def list_employees(db: Session = Depends(get_db)):
-    return db.query(models.Employee).all()
+    return db.query(models.EmployeeView).all()
 
 
 @router.get("/{id}", response_model=schemas.EmployeeRead)
