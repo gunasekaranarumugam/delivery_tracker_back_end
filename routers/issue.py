@@ -14,7 +14,9 @@ def create_issue(payload: schemas.IssueCreate, db: Session = Depends(get_db)):
         **payload.model_dump(exclude_unset=True),
         created_by="SYSTEM",
         updated_by="SYSTEM",
-        created_at=datetime.utcnow()
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
+     
     )
     db.add(issue)
     db.commit()
@@ -26,7 +28,13 @@ def create_issue(payload: schemas.IssueCreate, db: Session = Depends(get_db)):
 
 @router.get("/", response_model=List[schemas.IssueRead])
 def list_issues(limit: int = 100, offset: int = 0, db: Session = Depends(get_db)):
-    return db.query(models.Issue).offset(offset).limit(limit).all()
+     return (
+        db.query(models.Issue)
+        .filter(models.Issue.entity_status == 'Active') # ✅ THE CRUCIAL FILTER
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
 
 
 @router.get("/{id}", response_model=schemas.IssueRead)

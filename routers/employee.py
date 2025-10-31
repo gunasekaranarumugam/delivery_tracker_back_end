@@ -24,7 +24,7 @@ def create_employee(payload: schemas.EmployeeRegister, db: Session = Depends(get
         employee_email_address=payload.employee_email_address,
         password=payload.password,
         business_unit_id=payload.business_unit_id,
-        holiday_calendar_id=None,
+        
         created_by="SYSTEM",
         updated_by="SYSTEM",
         entity_status="Active",
@@ -82,7 +82,7 @@ def patch_employee(
         employee.entity_status = "ARCHIVED"
 
     # Update timestamps and system info
-    employee.updated_at = now()
+    employee.updated_at = datetime.now()
     employee.updated_by = "SYSTEM"
 
     db.commit()

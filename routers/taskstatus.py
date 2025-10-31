@@ -55,7 +55,7 @@ def update_task_status(id: str, payload: schemas.TaskStatusCreate, db: Session =
     db.commit()
     db.refresh(obj)
 
-    crud.audit_log(db, "TaskStatus", obj.task_status_id, "Update")
+    crud.audit_log(db, "TaskStatus", obj.task_status_id, "Update",changed_by="system")
     return obj
 
 

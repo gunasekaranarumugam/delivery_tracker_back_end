@@ -16,10 +16,10 @@ def now():
 @router.post("/", response_model=schemas.BusinessUnitRead, status_code=status.HTTP_201_CREATED)
 def create_business_unit(payload: schemas.BusinessUnitCreate, db: Session = Depends(get_db)):
     bu = models.BusinessUnit(
-        business_unit_id=payload.business_unit_id or generate_uuid(),
-        business_unit_name=payload.business_unit_name or "Unnamed BU",
-        business_unit_head_id=payload.business_unit_head_id or "SYSTEM",
-        business_unit_description=payload.business_unit_description or "No description",
+        business_unit_id=payload.business_unit_id,
+        business_unit_name=payload.business_unit_name,
+        business_unit_head_id=payload.business_unit_head_id,
+        business_unit_description=payload.business_unit_description,
         created_at=now(),
         updated_at=now(),
         created_by="SYSTEM",
@@ -40,9 +40,18 @@ def create_business_unit(payload: schemas.BusinessUnitCreate, db: Session = Depe
     )
     return bu
 
+#@router.get("/", response_model=List[schemas.BusinessUnitRead])
+#def list_business_units(db: Session = Depends(get_db)):
+#    return db.query(models.BusinessUnit).all()
+
 @router.get("/", response_model=List[schemas.BusinessUnitRead])
 def list_business_units(db: Session = Depends(get_db)):
-    return db.query(models.BusinessUnit).all()
+    # Add filtering here to exclude 'ARCHIVED' records
+    return db.query(models.BusinessUnit).filter(
+        models.BusinessUnit.entity_status == "Active"
+    ).all()
+
+    
 
 
 @router.get("/{id}", response_model=schemas.BusinessUnitRead)

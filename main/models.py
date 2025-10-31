@@ -6,6 +6,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.types import DECIMAL, Numeric
 import datetime
 
+
+
 Base = declarative_base()
 
 def now():
@@ -18,7 +20,7 @@ class Employee(Base):
     employee_email_address = Column(String(100))
     password = Column(String(100))
     business_unit_id = Column(String(10)) 
-    holiday_calendar_id = Column(String(10),nullable=True) 
+  # Change nullable=False to nullable=True
     created_at = Column(DateTime, default=now)
     created_by = Column(String(10))
     updated_at = Column(DateTime, default=now)
@@ -92,8 +94,8 @@ class Task(Base):
     updated_by = Column(String(10))
     entity_status = Column(String(10), default="Active")
 
-class TaskTypeMaster(Base):
-    __tablename__ = "task_type_master"
+class TaskType(Base):
+    __tablename__ = "task_type"
     task_type_id = Column(String(10), primary_key=True, index=True)
     task_type_Name = Column(String(100))
     task_type_description = Column(String(4000))

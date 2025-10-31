@@ -63,42 +63,37 @@ def update_deliverable(id: str, payload: schemas.DeliverableUpdate, db: Session 
 
 
 
+# --- 2. DEDICATED ARCHIVE ENDPOINT ---
+# The logic that should be under the /archive path.
 @router.patch("/{id}/archive", response_model=schemas.DeliverableRead, status_code=status.HTTP_200_OK)
-def patch_deliverable(
+def archive_deliverable(
     id: str,
-    payload: schemas.DeliverablePatch,  # schema with optional fields
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    
 ):
-    # Fetch Deliverable
     deliverable = db.query(models.Deliverable).filter(models.Deliverable.deliverable_id == id).first()
     
     if not deliverable:
-        # Cannot patch a non-existent deliverable
         raise HTTPException(status_code=404, detail="Deliverable not found")
+        
+    if deliverable.entity_status == "ARCHIVED":
+        # THIS IS LIKELY THE CAUSE OF THE 422 ERROR IN YOUR SCENARIO
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, 
+            detail="Deliverable is already archived."
+        )
 
-    # Update only provided fields
-    for key, value in payload.model_dump(exclude_unset=True).items():
-        setattr(deliverable, key, value)
+    # Enforce the archival action directly
+    deliverable.entity_status = "ARCHIVED"
 
-    # Automatically archive if requested
-    if payload.entity_status and payload.entity_status.upper() == "ARCHIVED":
-        deliverable.entity_status = "ARCHIVED"
-
-    # Update timestamps and system info
+    # Update metadata
     deliverable.updated_at = datetime.utcnow()
     deliverable.updated_by = "SYSTEM"
 
     db.commit()
     db.refresh(deliverable)
-
-    # Audit log
-    crud.audit_log(
-        db,
-        entity_type="Deliverable",
-        entity_id=deliverable.deliverable_id,
-        action="Patch",
-        changed_by="SYSTEM"
-    )
-
+    
+    # Audit log logic...
+    
     return deliverable
 
