@@ -25,14 +25,12 @@ class EmployeeBase(BaseModel):
     updated_by: str
     entity_status: str
 
-class EmployeeCreateAdmin(BaseModel): # Renamed for clarity vs. Register
+class EmployeeCreateAdmin(BaseModel):
     employee_id : str
     employee_full_name: str
     employee_email_address: str
     business_unit_id: str
-  
-    # NOTE: Password field is intentionally omitted for admin creation
-
+    
 class EmployeeRegister(BaseModel):
     employee_id : str
     employee_full_name: str
