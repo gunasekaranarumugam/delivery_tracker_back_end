@@ -40,27 +40,19 @@ def create_business_unit(payload: schemas.BusinessUnitCreate, db: Session = Depe
     )
     return bu
 
-#@router.get("/", response_model=List[schemas.BusinessUnitRead])
-#def list_business_units(db: Session = Depends(get_db)):
-#    return db.query(models.BusinessUnit).all()
-
 @router.get("/", response_model=List[schemas.BusinessUnitRead])
 def list_business_units(db: Session = Depends(get_db)):
     # Add filtering here to exclude 'ARCHIVED' records
-    return db.query(models.BusinessUnit).filter(
-        models.BusinessUnit.entity_status == "Active"
+    return db.query(models.BusinessUnitView).filter(
+        models.BusinessUnitView.entity_status == "Active"
     ).all()
-
-    
-
 
 @router.get("/{id}", response_model=schemas.BusinessUnitRead)
 def get_business_unit(id: str, db: Session = Depends(get_db)):
-    bu = db.query(models.BusinessUnit).filter(models.BusinessUnit.business_unit_id == id).first()
+    bu = db.query(models.BusinessUnitView).filter(models.BusinessUnitView.business_unit_id == id).first()
     if not bu:
         raise HTTPException(status_code=404, detail="Business Unit not found")
     return bu
-
 
 @router.put("/{id}", response_model=schemas.BusinessUnitRead)
 def update_business_unit(id: str, payload: schemas.BusinessUnitCreate, db: Session = Depends(get_db)):
