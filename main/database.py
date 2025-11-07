@@ -27,8 +27,8 @@ from sqlalchemy.orm import sessionmaker
 # --- Replace this section for MySQL ---
 # Define your database credentials
 db_user = "admin"
-db_password = ".g7D1N86Vyd6rM~Ro]p#!Fdx|A*5"
-db_host = "delivery-tracker-data.cw3uwuiqequv.us-east-1.rds.amazonaws.com"  # e.g., "localhost" or a server IP
+db_password = "wtjS(fR35oT-<oObw5G#q-L|3c(a"
+db_host = "delivery-tracker-db.c38wmw064mzj.ap-south-1.rds.amazonaws.com"  # e.g., "localhost" or a server IP
 db_name = "delivery_tracker"
 
 # Construct the MySQL database URL
