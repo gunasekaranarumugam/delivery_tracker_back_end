@@ -65,6 +65,7 @@ def decode_access_token(token: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email = payload.get("sub")
+        print(email)
         if email is None:
             raise HTTPException(status_code=401, detail="Invalid token")
         return email
@@ -252,37 +253,43 @@ class LoginPayload(BaseModel):
     email: EmailStr
     password: str
 
-@router.post("/login", response_model=schemas.EmployeeLoginResponse)
-def login_employee(
-    form_data: OAuth2PasswordRequestForm = Depends(),  # OAuth2 form
+@router.post("/login")
+def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
-    # Fetch employee by email
-    employee = db.query(models.Employee).filter(
+    # 1️⃣ Get the user by email (FastAPI OAuth2 uses "username" for email)
+    user = db.query(models.Employee).filter(
         models.Employee.employee_email_address == form_data.username
     ).first()
 
-    # Employee does not exist
-    if not employee:
-        raise HTTPException(status_code=401, detail="Employee not found")
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    # Employee exists but is archived
-    if employee.entity_status != "Active":
-        raise HTTPException(status_code=401, detail="Employee not found  and cannot login")
+   
+    if not verify_password(form_data.password, user.password):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    # Verify password
-    if not verify_password(form_data.password, employee.password):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    if getattr(user, "is_archived", False):
+        raise HTTPException(status_code=403, detail="Employee is archived and cannot login")
 
-    # Create JWT token
-    token = create_access_token(data={"sub": employee.employee_email_address})
-
-    return schemas.EmployeeLoginResponse(
-        employee_id=employee.employee_id,
-        employee_full_name=employee.employee_full_name,
-        employee_email_address=employee.employee_email_address,
-        auth_token=token
+   
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.employee_email_address},  # subject = user email
+        expires_delta=access_token_expires
     )
+
+    
+    return {
+        "access_token": access_token, 
+        "token_type": "bearer",
+        "employee_id": user.employee_id,
+        "employee_full_name": user.employee_full_name,
+        "employee_email_address": user.employee_email_address,
+    }
+
 
 @router.post("/logout")
 def logout_employee(token: str = Depends(oauth2_scheme)):
