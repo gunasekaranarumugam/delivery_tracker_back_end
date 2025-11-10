@@ -14,22 +14,14 @@ phases:
 
   post_build:
     commands:
-      - echo Pushing Docker image...
+      - echo Pushing Docker image to ECR...
       - docker push 294253399473.dkr.ecr.ap-south-1.amazonaws.com/delivery-tracker-back-end-main:latest
-      - echo Writing deployment files...
-      - echo "version: 0.0" > appspec.yml
-      - echo "os: linux" >> appspec.yml
-      - echo "files:" >> appspec.yml
-      - echo "  - source: deploy.sh" >> appspec.yml
-      - echo "    destination: /home/ec2-user/" >> appspec.yml
-      - echo "hooks:" >> appspec.yml
-      - echo "  AfterInstall:" >> appspec.yml
-      - echo "    - location: deploy.sh" >> appspec.yml
-      - echo "      timeout: 300" >> appspec.yml
-      - echo "      runas: ec2-user" >> appspec.yml
-      - chmod +x deploy.sh
+      - echo Creating deployment package...
+      - mkdir -p output
+      - cp deploy.sh output/
+      - cp appspec.yml output/
+      - chmod +x output/deploy.sh
 
 artifacts:
   files:
-    - appspec.yml
-    - deploy.sh
+    - output/**/*
