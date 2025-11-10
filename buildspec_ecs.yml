@@ -5,24 +5,23 @@ phases:
     commands:
       - echo Logging in to Amazon ECR...
       - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 294253399473.dkr.ecr.ap-south-1.amazonaws.com
+
   build:
     commands:
-      - echo Build started on `date`
-      - echo Building the Docker image...
+      - echo Building Docker image...
       - docker build -t delivery-tracker-back-end-main:latest .
       - docker tag delivery-tracker-back-end-main:latest 294253399473.dkr.ecr.ap-south-1.amazonaws.com/delivery-tracker-back-end-main:latest
-                                                        
+
   post_build:
     commands:
-      - echo Build completed on `date`
-      - echo Pushing the Docker image...
+      - echo Pushing Docker image to ECR...
       - docker push 294253399473.dkr.ecr.ap-south-1.amazonaws.com/delivery-tracker-back-end-main:latest
-      - echo Push is completed
-      - echo writing image definition file ...
-      - printf '[{"name":"delivery_tracker_cluster","imageUri":"294253399473.dkr.ecr.ap-south-1.amazonaws.com/delivery-tracker-back-end-main"}]' > imagedefinitions.json
- 
-     
+      - echo Creating deployment package...
+      - mkdir -p output
+      - cp deploy.sh output/
+      - cp appspec.yml output/
+      - chmod +x output/deploy.sh
 
 artifacts:
   files:
-    - imagedefinitions.json
+    - output/**/*
