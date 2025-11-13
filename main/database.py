@@ -13,10 +13,10 @@ load_dotenv()
 
 
 # --- MySQL connection details ---
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = quote(os.getenv("DB_PASSWORD"))  # encode special chars
-DB_HOST = os.getenv("DB_HOST")
-DB_NAME = os.getenv("DB_NAME")
+DB_USER = "admin"
+DB_PASSWORD = "Meganathisekaran001" # encode special chars
+DB_HOST = "delivery-tracker-data.c38wmw064mzj.ap-south-1.rds.amazonaws.com"
+DB_NAME = "delivery_tracker_dev"
 
 DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
 # Create SQLAlchemy engine and session
