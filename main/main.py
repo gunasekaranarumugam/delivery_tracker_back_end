@@ -35,7 +35,7 @@ origins = [
     "http://localhost:4200",  # Allow requests from your Angular app
     "http://localhost",
     "http://127.0.0.1:4200",
-    
+    "http://deliverytrackerfrontend.s3-website.ap-south-1.amazonaws.com",  # S3 frontend
 ]
 
 app.add_middleware(
