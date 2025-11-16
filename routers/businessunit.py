@@ -1,12 +1,15 @@
-from fastapi import APIRouter, Depends, status, HTTPException
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import DBAPIError, OperationalError
-from typing import List
 from datetime import datetime
+from typing import List
 
-from main import models, schemas, crud
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.exc import DBAPIError, OperationalError
+from sqlalchemy.orm import Session
+
+from main import crud, models, schemas
 from main.database import get_db
-from .employee import get_current_employee  # ✅ Import here
+
+from .employee import get_current_employee
+
 
 router = APIRouter()
 
@@ -19,7 +22,7 @@ def now():
 def create_business_unit(
     payload: schemas.BusinessUnitCreate,
     db: Session = Depends(get_db),
-    current_employee: models.Employee = Depends(get_current_employee)  # ✅ Use current employee
+    current_employee: models.Employee = Depends(get_current_employee),
 ):
     try:
         bu = models.BusinessUnit(
@@ -29,27 +32,36 @@ def create_business_unit(
             business_unit_head_id=payload.business_unit_head_id,
             created_at=now(),
             updated_at=now(),
-            created_by=current_employee.employee_id,  # ✅ Use current employee
-            updated_by=current_employee.employee_id,  # ✅ Use current employee
-            entity_status="Active"
+            created_by=current_employee.employee_id,
+            updated_by=current_employee.employee_id,
+            entity_status="Active",
         )
 
         db.add(bu)
         db.commit()
         db.refresh(bu)
 
-        # Fetch from the view (so names are included)
-        bu_view = db.query(models.BusinessUnitView).filter(
-            models.BusinessUnitView.business_unit_id == bu.business_unit_id
-        ).first()
+        bu_view = (
+            db.query(models.BusinessUnitView)
+            .filter(models.BusinessUnitView.business_unit_id == bu.business_unit_id)
+            .first()
+        )
 
-        crud.audit_log(db, "Business Unit", bu.business_unit_id, "Create", changed_by=current_employee.employee_id)
+        crud.audit_log(
+            db,
+            "Business Unit",
+            bu.business_unit_id,
+            "Create",
+            changed_by=current_employee.employee_id,
+        )
 
         return bu_view
 
-    except (DBAPIError, OperationalError) as e:
+    except (DBAPIError, OperationalError):
         db.rollback()
-        raise HTTPException(status_code=500, detail="Database error while creating Business Unit.")
+        raise HTTPException(
+            status_code=500, detail="Database error while creating Business Unit."
+        )
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
@@ -58,11 +70,15 @@ def create_business_unit(
 @router.get("/", response_model=List[schemas.BusinessUnitRead])
 def list_business_units(db: Session = Depends(get_db)):
     try:
-        return db.query(models.BusinessUnitView).filter(
-            models.BusinessUnitView.entity_status == "Active"
-        ).all()
+        return (
+            db.query(models.BusinessUnitView)
+            .filter(models.BusinessUnitView.entity_status == "Active")
+            .all()
+        )
     except (DBAPIError, OperationalError):
-        raise HTTPException(status_code=500, detail="Database error while fetching Business Units list.")
+        raise HTTPException(
+            status_code=500, detail="Database error while fetching Business Units list."
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
@@ -70,12 +86,18 @@ def list_business_units(db: Session = Depends(get_db)):
 @router.get("/{id}", response_model=schemas.BusinessUnitRead)
 def get_business_unit(id: str, db: Session = Depends(get_db)):
     try:
-        bu = db.query(models.BusinessUnitView).filter(models.BusinessUnitView.business_unit_id == id).first()
+        bu = (
+            db.query(models.BusinessUnitView)
+            .filter(models.BusinessUnitView.business_unit_id == id)
+            .first()
+        )
         if not bu:
             raise HTTPException(status_code=404, detail="Business Unit not found")
         return bu
     except (DBAPIError, OperationalError):
-        raise HTTPException(status_code=500, detail="Database error while fetching Business Unit.")
+        raise HTTPException(
+            status_code=500, detail="Database error while fetching Business Unit."
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
@@ -85,23 +107,28 @@ def update_business_unit(
     id: str,
     payload: schemas.BusinessUnitUpdate,
     db: Session = Depends(get_db),
-    current_employee: models.Employee = Depends(get_current_employee)
+    current_employee: models.Employee = Depends(get_current_employee),
 ):
     try:
-        bu = db.query(models.BusinessUnit).filter(models.BusinessUnit.business_unit_id == id).first()
+        bu = (
+            db.query(models.BusinessUnit)
+            .filter(models.BusinessUnit.business_unit_id == id)
+            .first()
+        )
 
         if not bu:
-            # Optional: upsert behavior
             bu = models.BusinessUnit(
                 business_unit_id=id,
                 business_unit_name=payload.business_unit_name or "Unnamed BU",
-                business_unit_head_id=payload.business_unit_head_id or current_employee.employee_id,
-                business_unit_description=payload.business_unit_description or "No description",
+                business_unit_head_id=payload.business_unit_head_id
+                or current_employee.employee_id,
+                business_unit_description=payload.business_unit_description
+                or "No description",
                 created_at=now(),
                 updated_at=now(),
                 created_by=current_employee.employee_id,
                 updated_by=current_employee.employee_id,
-                entity_status=payload.entity_status or "Active"
+                entity_status=payload.entity_status or "Active",
             )
             db.add(bu)
             action = "Create"
@@ -117,28 +144,32 @@ def update_business_unit(
         db.commit()
         db.refresh(bu)
 
-        # Fetch the BU view safely
-        bu_view = db.query(models.BusinessUnitView).filter(
-            models.BusinessUnitView.business_unit_id == bu.business_unit_id
-        ).first()
+        bu_view = (
+            db.query(models.BusinessUnitView)
+            .filter(models.BusinessUnitView.business_unit_id == bu.business_unit_id)
+            .first()
+        )
 
         if not bu_view:
-            raise HTTPException(status_code=404, detail="Business Unit view not found after update")
+            raise HTTPException(
+                status_code=404, detail="Business Unit view not found after update"
+            )
 
-        # Audit log
         crud.audit_log(
             db,
             entity_type="BusinessUnit",
             entity_id=bu.business_unit_id,
             action=action,
-            changed_by=current_employee.employee_id
+            changed_by=current_employee.employee_id,
         )
 
         return bu_view
 
     except (DBAPIError, OperationalError):
         db.rollback()
-        raise HTTPException(status_code=500, detail="Database error while updating Business Unit.")
+        raise HTTPException(
+            status_code=500, detail="Database error while updating Business Unit."
+        )
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
@@ -148,14 +179,16 @@ def update_business_unit(
 def archive_business_unit(
     id: str,
     db: Session = Depends(get_db),
-    current_user: models.Employee = Depends(get_current_employee)
+    current_user: models.Employee = Depends(get_current_employee),
 ):
-    # Fetch BU
-    bu = db.query(models.BusinessUnit).filter(models.BusinessUnit.business_unit_id == id).first()
+    bu = (
+        db.query(models.BusinessUnit)
+        .filter(models.BusinessUnit.business_unit_id == id)
+        .first()
+    )
     if not bu:
         raise HTTPException(status_code=404, detail="Business Unit not found")
 
-    # Soft delete
     bu.entity_status = "ARCHIVED"
     bu.updated_at = now()
     bu.updated_by = current_user.employee_id
@@ -163,5 +196,7 @@ def archive_business_unit(
     db.commit()
     db.refresh(bu)
 
-    return {"message": "Business Unit archived successfully", "business_unit_id": bu.business_unit_id}
-
+    return {
+        "message": "Business Unit archived successfully",
+        "business_unit_id": bu.business_unit_id,
+    }

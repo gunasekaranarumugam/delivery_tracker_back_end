@@ -1,20 +1,29 @@
-from fastapi import APIRouter, Depends, status, HTTPException
-from typing import List
-from sqlalchemy.orm import Session
 from datetime import datetime
-from main import models, schemas, crud
+from typing import List
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.exc import DBAPIError, IntegrityError, OperationalError
+from sqlalchemy.orm import Session
+
+from main import crud, models, schemas
 from main.database import get_db
+
 from .employee import get_current_employee
-from sqlalchemy.exc import IntegrityError, DBAPIError, OperationalError
+
 
 router = APIRouter()
 
 
-@router.post("/", response_model=schemas.ProjectRead, status_code=status.HTTP_201_CREATED)
-def create_project(payload: schemas.ProjectCreate, db: Session = Depends(get_db),  current_employee: models.Employee = Depends(get_current_employee)):
+@router.post(
+    "/", response_model=schemas.ProjectRead, status_code=status.HTTP_201_CREATED
+)
+def create_project(
+    payload: schemas.ProjectCreate,
+    db: Session = Depends(get_db),
+    current_employee: models.Employee = Depends(get_current_employee),
+):
     project = models.Project(
         **payload.model_dump(exclude_unset=True),
-     
         created_by=current_employee.employee_id,
         updated_by=current_employee.employee_id,
         created_at=datetime.utcnow(),
@@ -23,14 +32,14 @@ def create_project(payload: schemas.ProjectCreate, db: Session = Depends(get_db)
     db.commit()
     db.refresh(project)
 
-      # ✅ Fetch from the view (so names are included)
-    project_view = db.query(models.ProjectView).filter(
-        models.ProjectView.project_id == project.project_id
-    ).first()
+    project_view = (
+        db.query(models.ProjectView)
+        .filter(models.ProjectView.project_id == project.project_id)
+        .first()
+    )
 
     crud.audit_log(db, "Project", project.project_id, "Create", changed_by="SYSTEM")
     return project_view
-
 
 
 @router.get("/", response_model=List[schemas.ProjectRead])
@@ -38,31 +47,31 @@ def list_projects(limit: int = 100, offset: int = 0, db: Session = Depends(get_d
     return db.query(models.ProjectView).all()
 
 
-
 @router.get("/{id}", response_model=schemas.ProjectRead)
 def get_project_by_id(id: str, db: Session = Depends(get_db)):
-    project = db.query(models.ProjectView).filter(models.ProjectView.project_id == id).first()
+    project = (
+        db.query(models.ProjectView).filter(models.ProjectView.project_id == id).first()
+    )
     return project
-
 
 
 @router.put("/{id}", response_model=schemas.ProjectRead, status_code=200)
 def update_project(
-    id: str, 
-    payload: schemas.ProjectUpdate, 
-    db: Session = Depends(get_db), 
-    current_employee: models.Employee = Depends(get_current_employee)
+    id: str,
+    payload: schemas.ProjectUpdate,
+    db: Session = Depends(get_db),
+    current_employee: models.Employee = Depends(get_current_employee),
 ):
     """
     Update project fields in the Project table.
     Return the fully populated ProjectView for frontend display.
     """
     try:
-        # 1. Fetch existing project
-        project = db.query(models.Project).filter(models.Project.project_id == id).first()
+        project = (
+            db.query(models.Project).filter(models.Project.project_id == id).first()
+        )
 
         if not project:
-            # Create new project if it doesn't exist
             project = models.Project(
                 project_id=id,
                 **payload.model_dump(exclude_unset=True),
@@ -70,12 +79,13 @@ def update_project(
                 updated_by=current_employee.employee_id,
                 created_at=datetime.utcnow(),
                 updated_at=datetime.utcnow(),
-                entity_status="Active"
+                entity_status="Active",
             )
             db.add(project)
         else:
-            # Update only provided fields
-            print("Payload fields being updated:", payload.model_dump(exclude_unset=True))
+            print(
+                "Payload fields being updated:", payload.model_dump(exclude_unset=True)
+            )
 
             for key, value in payload.model_dump(exclude_unset=True).items():
                 setattr(project, key, value)
@@ -83,33 +93,35 @@ def update_project(
             project.updated_at = datetime.utcnow()
             project.updated_by = current_employee.employee_id
 
-         
-        # 2. Commit changes to Project table
         db.commit()
         db.refresh(project)
 
-    
+        crud.audit_log(
+            db,
+            "Project",
+            project.project_id,
+            "Update",
+            changed_by=current_employee.employee_id,
+        )
 
-
-        # 3. Audit log
-        crud.audit_log(db, "Project", project.project_id, "Update", changed_by=current_employee.employee_id)
-
-        # 4. Fetch updated ProjectView
-        project_view = db.query(models.ProjectView).filter(
-            models.ProjectView.project_id == project.project_id
-        ).first()
+        project_view = (
+            db.query(models.ProjectView)
+            .filter(models.ProjectView.project_id == project.project_id)
+            .first()
+        )
 
         if not project_view:
             raise HTTPException(
-                status_code=500,
-                detail="Project updated but view not found"
+                status_code=500, detail="Project updated but view not found"
             )
 
         print("Updated project table value:", project.delivery_manager_id)
-        print("Returned view value:", project_view.delivery_manager_id, project_view.delivery_manager_name)
+        print(
+            "Returned view value:",
+            project_view.delivery_manager_id,
+            project_view.delivery_manager_name,
+        )
 
-
-        # 5. Return view for frontend
         return project_view
 
         print(project_view.delivery_manager_id, project_view.delivery_manager_name)
@@ -122,19 +134,16 @@ def update_project(
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
 
-
 @router.patch("/{id}/archive")
 def archive_project(
     id: str,
     db: Session = Depends(get_db),
-    current_employee: models.Employee = Depends(get_current_employee)
+    current_employee: models.Employee = Depends(get_current_employee),
 ):
-    # Fetch Project
     project = db.query(models.Project).filter(models.Project.project_id == id).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    # Soft delete / archive
     project.entity_status = "ARCHIVED"
     project.updated_at = datetime.utcnow()
     project.updated_by = current_employee.employee_id
@@ -142,4 +151,7 @@ def archive_project(
     db.commit()
     db.refresh(project)
 
-    return {"message": "Project archived successfully", "project_id": project.project_id}
+    return {
+        "message": "Project archived successfully",
+        "project_id": project.project_id,
+    }
