@@ -68,17 +68,6 @@ def decode_access_token(token: str):
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
-"""def get_current_employee(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-    if not token:
-        raise HTTPException(status_code=401, detail="Missing authentication token")
-    
-    email = decode_access_token(token)
-    employee = db.query(models.Employee).filter(models.Employee.employee_email_address == email).first()
-    if not employee:
-        raise HTTPException(status_code=404, detail="Employee not found")
-    return employee"""
-
-
 def get_current_employee(
     token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
 ):

@@ -1,4 +1,3 @@
-
 # Delivery Tracker vFinal18 (Modular)
 
 This is a modular FastAPI implementation for Delivery Tracker (vFinal18).

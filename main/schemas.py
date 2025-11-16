@@ -341,7 +341,6 @@ class TaskCreate(TaskBase):
 
 
 class TaskUpdate(BaseModel):
-
     task_id: Optional[str]
     task_type_id: Optional[str]
     business_unit_id: Optional[str]
@@ -553,7 +552,6 @@ class IssueCreate(BaseModel):
 
 
 class IssueUpdate(BaseModel):
-
     business_unit_id: Optional[str]
     business_unit_name: Optional[str] = None
     project_id: Optional[str]
@@ -630,7 +628,6 @@ class IssueActivityCreate(BaseModel):
 
 
 class IssueActivityUpdate(BaseModel):
-
     comment: Optional[str] = None
     entity_status: Optional[str] = None
 

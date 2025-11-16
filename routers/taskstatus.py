@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.exc import DBAPIError, IntegrityError, OperationalError
 from sqlalchemy.orm import Session
 
@@ -58,11 +58,7 @@ def create_task_status(
     current_employee: models.Employee = Depends(get_current_employee),
 ):
     try:
-        print("--- Incoming Payload Data ---")
-        print(payload.model_dump())
-        print("-----------------------------")
-
-        obj = models.TaskStatus(
+        task_status = models.TaskStatus(
             **payload.model_dump(),
             created_by=current_employee.employee_id,
             created_at=now_utc(),
@@ -70,115 +66,112 @@ def create_task_status(
             updated_at=now_utc(),
             entity_status="Active",
         )
-
     except Exception as e:
-        print(f"Failed to initialize Task Status model: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to initialize Task Status model. Check required fields or types: {e}",
+            detail=(
+                f"Failed to initialize Task Status model. "
+                f"Check required fields or data types: {e}"
+            ),
         )
-
-    print("--- ORM Object Data (Pre-Commit) ---")
-    print(f"Task Status ID: {obj.task_status_id}")
-    print(f"Task ID: {obj.task_id}")
-    print(f"Hours Spent: {obj.hours_spent}")
-    print(f"Created By: {obj.created_by}")
-    print("------------------------------------")
-
     try:
-        db.add(obj)
+        db.add(task_status)
         db.commit()
-        db.refresh(obj)
+        db.refresh(task_status)
     except (IntegrityError, DBAPIError, OperationalError) as e:
+        db.rollback()
         handle_db_error(db, e, "Task Status creation")
     except Exception as e:
+        db.rollback()
         handle_db_error(db, e, "Task Status creation (unexpected)")
-
-    crud.audit_log(
-        db,
-        "TaskStatus",
-        obj.task_status_id,
-        "Create",
-        changed_by=current_employee.employee_id,
-    )
-
-    obj_view = (
-        db.query(models.TaskStatusView)
-        .filter(models.TaskStatusView.task_status_id == obj.task_status_id)
-        .first()
-    )
-
-    return obj_view
+    try:
+        crud.audit_log(
+            db,
+            "TaskStatus",
+            task_status.task_status_id,
+            "Create",
+            changed_by=current_employee.employee_id,
+        )
+    except Exception:
+        pass
+    try:
+        task_status_view = (
+            db.query(models.TaskStatusView)
+            .filter(models.TaskStatusView.task_status_id == task_status.task_status_id)
+            .first()
+        )
+        return task_status_view if task_status_view else task_status
+    except (DBAPIError, OperationalError):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error while retrieving created Task Status view.",
+        )
 
 
 @router.get(
     "/",
     response_model=List[schemas.TaskStatusRead],
-    summary="Get list of Task Statuses",
+    summary="Get list of Task Status",
 )
-def list_task_statuses(
-    limit: int = Query(100, ge=1),
-    offset: int = 0,
+def list_task_status(
     db: Session = Depends(get_db),
 ):
     try:
-        db.query(models.TaskStatusView)
-
-        task_statuses = (
+        task_status_view = (
             db.query(models.TaskStatusView)
             .filter(models.TaskStatusView.entity_status != "ARCHIVED")
             .all()
         )
-
-        return task_statuses
-
-    except (DBAPIError, OperationalError) as e:
-        print(f"Database Error: {e}")
+        return task_status_view
+    except (DBAPIError, OperationalError):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database error while fetching Task Statuses list.",
+            detail="Database error while fetching Task Status list.",
         )
     except Exception as e:
-        print(f"Unexpected Error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred while listing Task Statuses.",
+            detail=f"An unexpected error occurred while listing Task Statuses: {e}",
         )
 
 
 @router.get(
-    "/{id}", response_model=schemas.TaskStatusRead, summary="Get Task Status by ID"
+    "/{id}",
+    response_model=schemas.TaskStatusRead,
+    summary="Get Task Status by ID",
 )
-def get_task_status(id: str, db: Session = Depends(get_db)):
+def get_task_status(
+    id: str,
+    db: Session = Depends(get_db),
+):
     try:
-        obj = (
+        task_status_view = (
             db.query(models.TaskStatusView)
             .filter(models.TaskStatusView.task_status_id == id)
             .first()
         )
-
-        if not obj:
+        if not task_status_view:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Task Status not found"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Task Status not found",
             )
-        return obj
-
-    except HTTPException as e:
-        raise e
+        return task_status_view
     except (DBAPIError, OperationalError):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database error while fetching single Task Status.",
+            detail="Database error while fetching Task Status.",
         )
-    except Exception:
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred while fetching Task Status.",
+            detail=f"An unexpected error occurred while fetching Task Status: {e}",
         )
 
 
 @router.put(
-    "/{id}", response_model=schemas.TaskStatusRead, summary="Update Task Status"
+    "/{id}",
+    response_model=schemas.TaskStatusRead,
+    summary="Update Task Status",
 )
 def update_task_status(
     id: str,
@@ -187,84 +180,129 @@ def update_task_status(
     current_employee: models.Employee = Depends(get_current_employee),
 ):
     try:
-        obj = (
+        task_status = (
             db.query(models.TaskStatus)
             .filter(models.TaskStatus.task_status_id == id)
             .first()
         )
-        if not obj:
+        if not task_status:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Task Status not found"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Task Status not found",
             )
     except (DBAPIError, OperationalError):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Database error while retrieving Task Status for update.",
         )
-
     try:
-        for k, v in payload.model_dump().items():
-            setattr(obj, k, v)
-        obj.updated_at = now_utc()
-        obj.updated_by = current_employee.employee_id
+        update_data = payload.model_dump()
+        for key, value in update_data.items():
+            if value is None:
+                continue
+            if not hasattr(task_status, key):
+                continue
+            setattr(task_status, key, value)
+        task_status.updated_at = now_utc()
+        task_status.updated_by = current_employee.employee_id
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to apply update payload: {e}",
         )
-
     try:
         db.commit()
-        db.refresh(obj)
+        db.refresh(task_status)
     except (IntegrityError, DBAPIError, OperationalError) as e:
+        db.rollback()
         handle_db_error(db, e, "Task Status update")
     except Exception as e:
+        db.rollback()
         handle_db_error(db, e, "Task Status update (unexpected)")
-
     try:
-        obj_view = (
+        task_status_view = (
             db.query(models.TaskStatusView)
-            .filter(models.TaskStatusView.task_status_id == obj.task_status_id)
+            .filter(models.TaskStatusView.task_status_id == task_status.task_status_id)
             .first()
         )
-        return obj_view if obj_view else obj
+        try:
+            crud.audit_log(
+                db,
+                "TaskStatus",
+                task_status.task_status_id,
+                "Update",
+                changed_by=current_employee.employee_id,
+            )
+        except Exception:
+            pass
+        return task_status_view if task_status_view else task_status
     except (DBAPIError, OperationalError):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database error while querying Task Type view after update.",
+            detail="Database error while querying Task Status view after update.",
         )
 
-    crud.audit_log(
-        db,
-        "TaskStatus",
-        obj.task_status_id,
-        "Update",
-        changed_by=current_employee.employee_id,
-    )
 
-
-@router.patch("/{id}/archive")
+@router.patch(
+    "/{id}/archive",
+    summary="Archive Task Status",
+)
 def archive_task_status(
     id: str,
     db: Session = Depends(get_db),
     current_employee: models.Employee = Depends(get_current_employee),
 ):
-    status = (
-        db.query(models.TaskStatus)
-        .filter(models.TaskStatus.task_status_id == id)
-        .first()
-    )
-    if not status:
-        raise HTTPException(status_code=404, detail="TaskStatus not found")
-
-    status.entity_status = "ARCHIVED"
-    status.updated_at = now_utc()
-    status.updated_by = current_employee.employee_id
-
-    db.commit()
-    db.refresh(status)
-
-    return {
-        "message": "TaskStatus archived successfully",
-        "status_id": status.task_status_id,
-    }
+    try:
+        task_status = (
+            db.query(models.TaskStatus)
+            .filter(models.TaskStatus.task_status_id == id)
+            .first()
+        )
+        if not task_status:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Task Status not found",
+            )
+    except (DBAPIError, OperationalError):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error while retrieving Task Status for archive.",
+        )
+    try:
+        task_status.entity_status = "ARCHIVED"
+        task_status.updated_at = now_utc()
+        task_status.updated_by = current_employee.employee_id
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to apply archive changes: {e}",
+        )
+    try:
+        db.commit()
+        db.refresh(task_status)
+    except (IntegrityError, DBAPIError, OperationalError) as e:
+        handle_db_error(db, e, "Task Status archive")
+    except Exception as e:
+        handle_db_error(db, e, "Task Status archive (unexpected)")
+    try:
+        task_status_view = (
+            db.query(models.TaskStatusView)
+            .filter(models.TaskStatusView.task_status_id == task_status.task_status_id)
+            .first()
+        )
+        try:
+            crud.audit_log(
+                db,
+                "TaskStatus",
+                task_status.task_status_id,
+                "Archive",
+                changed_by=current_employee.employee_id,
+            )
+        except Exception:
+            pass
+        return task_status_view if task_status_view else task_status
+    except (DBAPIError, OperationalError):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error while querying Task Status view after archive.",
+        )

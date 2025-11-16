@@ -16,7 +16,6 @@ def audit_log(
 ):
     if not field_changed:
         field_changed = "ALL"
-
     al = models.AuditLog(
         audit_id=str(uuid.uuid4()),
         entity_type=entity_type,
