@@ -14,7 +14,7 @@ from .login import get_current_employee, hash_password
 router = APIRouter()
 
 
-@router.post("/", response_model=schemas.EmployeeViewBase)
+@router.post("/", response_model=List[schemas.EmployeeViewBase])
 def create_employee(
     payload: schemas.EmployeeCreate,
     db: Session = Depends(get_db),
@@ -127,7 +127,7 @@ def update_employee(
 ):
     try:
         employee = (
-            db.query(models.employee).filter(models.employee.employee_id == id).first()
+            db.query(models.Employee).filter(models.Employee.employee_id == id).first()
         )
         if not employee:
             raise HTTPException(
@@ -179,8 +179,8 @@ def update_employee(
     try:
         employee_view = (
             db.query(models.EmployeeView)
-            .filter(models.EmployeeView.entity_status == "Active")
-            .all()
+            .filter(models.EmployeeView.employee_id == id)
+            .first()
         )
         return employee_view
     except (DBAPIError, OperationalError):
@@ -190,7 +190,7 @@ def update_employee(
         )
 
 
-@router.patch("/{id}/archive", response_model=schemas.EmployeeViewBase)
+@router.patch("/{id}/archive", response_model=List[schemas.EmployeeViewBase])
 def archive_employee(
     id: str,
     db: Session = Depends(get_db),
@@ -198,7 +198,7 @@ def archive_employee(
 ):
     try:
         employee = (
-            db.query(models.employee).filter(models.employee.employee_id == id).first()
+            db.query(models.Employee).filter(models.Employee.employee_id == id).first()
         )
         if not employee:
             raise HTTPException(
