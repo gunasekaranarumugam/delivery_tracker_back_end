@@ -1,12 +1,12 @@
 from datetime import datetime
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.exc import DBAPIError, OperationalError
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.exc import DBAPIError, IntegrityError, OperationalError
 from sqlalchemy.orm import Session
 
 from main import crud, models, schemas
-from main.database import get_db
+from main.database import get_db, handle_db_error
 
 from .employee import get_current_employee
 
@@ -26,27 +26,32 @@ def create_business_unit(
 ):
     try:
         bu = models.BusinessUnit(
-            business_unit_id=payload.business_unit_id,
-            business_unit_name=payload.business_unit_name,
-            business_unit_description=payload.business_unit_description,
-            business_unit_head_id=payload.business_unit_head_id,
+            **payload.model_dump(),
             created_at=now(),
             updated_at=now(),
             created_by=current_employee.employee_id,
             updated_by=current_employee.employee_id,
             entity_status="Active",
         )
-
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=(
+                f"Failed to initialize Business Unit model. "
+                f"Check required fields or data types: {e}"
+            ),
+        )
+    try:
         db.add(bu)
         db.commit()
         db.refresh(bu)
-
-        bu_view = (
-            db.query(models.BusinessUnitView)
-            .filter(models.BusinessUnitView.business_unit_id == bu.business_unit_id)
-            .first()
-        )
-
+    except (IntegrityError, DBAPIError, OperationalError) as e:
+        db.rollback()
+        handle_db_error(db, e, "Business Unit creation")
+    except Exception as e:
+        db.rollback()
+        handle_db_error(db, e, "Business Unit creation (unexpected)")
+    try:
         crud.audit_log(
             db,
             "Business Unit",
@@ -54,17 +59,20 @@ def create_business_unit(
             "Create",
             changed_by=current_employee.employee_id,
         )
-
-        return bu_view
-
-    except (DBAPIError, OperationalError):
-        db.rollback()
-        raise HTTPException(
-            status_code=500, detail="Database error while creating Business Unit."
+    except Exception:
+        pass
+    try:
+        bu_view = (
+            db.query(models.BusinessUnitView)
+            .filter(models.BusinessUnitView.business_unit_id == bu.business_unit_id)
+            .first()
         )
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+        return bu_view
+    except (DBAPIError, OperationalError):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error while retrieving created Business Unit view.",
+        )
 
 
 @router.get("/", response_model=List[schemas.BusinessUnitRead])
