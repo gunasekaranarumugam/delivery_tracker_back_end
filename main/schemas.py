@@ -2,10 +2,7 @@ from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, Field
-
-
-def now():
-    return datetime.utcnow()
+from utils import now_utc
 
 
 class EmployeeBase(BaseModel):
@@ -13,9 +10,9 @@ class EmployeeBase(BaseModel):
     employee_full_name: str
     employee_email_address: str
     password: str
-    created_at: datetime = Field(default_factory=now)
+    created_at: datetime = Field(default_factory=now_utc())
     created_by: str
-    updated_at: datetime = Field(default_factory=now)
+    updated_at: datetime = Field(default_factory=now_utc())
     updated_by: str
     entity_status: str = "Active"
 
@@ -65,9 +62,9 @@ class BusinessUnitBase(BaseModel):
     business_unit_name: str
     business_unit_description: str
     business_unit_head_id: str
-    created_at: datetime = Field(default_factory=now)
+    created_at: datetime = Field(default_factory=now_utc())
     created_by: str
-    updated_at: datetime = Field(default_factory=now)
+    updated_at: datetime = Field(default_factory=now_utc())
     updated_by: str
     entity_status: str = "Active"
 
@@ -120,9 +117,9 @@ class ProjectBase(BaseModel):
     baseline_end_date: datetime
     planned_start_date: datetime
     planned_end_date: datetime
-    created_at: datetime = Field(default_factory=now)
+    created_at: datetime = Field(default_factory=now_utc())
     created_by: str
-    updated_at: datetime = Field(default_factory=now)
+    updated_at: datetime = Field(default_factory=now_utc())
     updated_by: str
     entity_status: str = "Active"
 
@@ -141,13 +138,13 @@ class ProjectViewBase(BaseModel):
     baseline_end_date: datetime
     planned_start_date: datetime
     planned_end_date: datetime
-    created_at: datetime = Field(default_factory=now)
+    created_at: datetime
     created_by: str
     created_by_name: str
-    updated_at: datetime = Field(default_factory=now)
+    updated_at: datetime
     updated_by: str
     updated_by_name: str
-    entity_status: str = "Active"
+    entity_status: str
 
 
 class ProjectCreate(BaseModel):
@@ -193,9 +190,9 @@ class DeliverableBase(BaseModel):
     baseline_end_date: datetime
     planned_start_date: datetime
     planned_end_date: datetime
-    created_at: datetime = Field(default_factory=now)
+    created_at: datetime = Field(default_factory=now_utc())
     created_by: str
-    updated_at: datetime = Field(default_factory=now)
+    updated_at: datetime = Field(default_factory=now_utc())
     updated_by: str
     entity_status: str = "Active"
 
@@ -217,13 +214,13 @@ class DeliverableViewBase(BaseModel):
     baseline_end_date: datetime
     planned_start_date: datetime
     planned_end_date: datetime
-    created_at: datetime = Field(default_factory=now)
+    created_at: datetime
     created_by: str
     created_by_name: str
-    updated_at: datetime = Field(default_factory=now)
+    updated_at: datetime
     updated_by: str
     updated_by_name: str
-    entity_status: str = "Active"
+    entity_status: str
 
 
 class DeliverableCreate(BaseModel):
@@ -304,13 +301,13 @@ class TaskViewBase(BaseModel):
     assignee_name: str
     reviewer_id: str
     reviewer_name: str
-    created_at: datetime = Field(default_factory=now)
+    created_at: datetime
     created_by: str
     created_by_name: str
-    updated_at: datetime = Field(default_factory=now)
+    updated_at: datetime
     updated_by: str
     updated_by_name: str
-    entity_status: str = "Active"
+    entity_status: str
 
 
 class TaskCreate(TaskBase):
@@ -364,9 +361,9 @@ class TaskTypeBase(BaseModel):
     task_type_id: str
     task_type_Name: str
     task_type_description: Optional[str] = None
-    created_at: datetime = Field(default_factory=now)
+    created_at: datetime = Field(default_factory=now_utc())
     created_by: str
-    updated_at: datetime = Field(default_factory=now)
+    updated_at: datetime = Field(default_factory=now_utc())
     updated_by: str
     entity_status: str = "Active"
 
@@ -375,13 +372,13 @@ class TaskTypeViewBase(BaseModel):
     task_type_id: str
     task_type_Name: str
     task_type_description: Optional[str] = None
-    created_at: datetime = Field(default_factory=now)
+    created_at: datetime
     created_by: str
     created_by_name: str
-    updated_at: datetime = Field(default_factory=now)
+    updated_at: datetime
     updated_by: str
     updated_by_name: str
-    entity_status: str = "Active"
+    entity_status: str
 
 
 class TaskTypeCreate(BaseModel):
@@ -412,9 +409,9 @@ class TaskStatusBase(BaseModel):
     progress: str
     hours_spent: str
     remarks: str
-    created_at: datetime = Field(default_factory=now)
+    created_at: datetime = Field(default_factory=now_utc())
     created_by: str
-    updated_at: datetime = Field(default_factory=now)
+    updated_at: datetime = Field(default_factory=now_utc())
     updated_by: str
     entity_status: str = "Active"
 
@@ -438,13 +435,13 @@ class TaskStatusViewBase(BaseModel):
     progress: str
     hours_spent: str
     remarks: str
-    created_at: datetime = Field(default_factory=now)
-    updated_at: datetime = Field(default_factory=now)
+    created_at: datetime
+    updated_at: datetime
     created_by: str
     created_by_name: str
     updated_by_name: str
     updated_by: str
-    entity_status: str = "Active"
+    entity_status: str
 
     class Config:
         from_attributes = True
@@ -493,9 +490,9 @@ class IssueBase(BaseModel):
     action_owner_id: str
     priority: str
     status: str
-    created_at: datetime = Field(default_factory=now)
+    created_at: datetime = Field(default_factory=now_utc())
     created_by: str
-    updated_at: datetime = Field(default_factory=now)
+    updated_at: datetime = Field(default_factory=now_utc())
     updated_by: str
     entity_status: str = "Active"
 
@@ -521,13 +518,13 @@ class IssueViewBase(BaseModel):
     issue_status: str
     action_owner_id: str
     action_owner_name: str
-    created_at: datetime = Field(default_factory=now)
+    created_at: datetime
     created_by: str
     created_by_name: str
-    updated_at: datetime = Field(default_factory=now)
+    updated_at: datetime
     updated_by: str
     updated_by_name: str
-    entity_status: str = "Active"
+    entity_status: str
 
 
 class IssueCreate(BaseModel):
@@ -571,11 +568,11 @@ class IssueActivityBase(BaseModel):
     issue_activity_id: str
     issue_id: str
     comment_by: str
-    comment_at: datetime = Field(default_factory=now)
+    comment_at: datetime = Field(default_factory=now_utc())
     comment: str
-    created_at: datetime = Field(default_factory=now)
+    created_at: datetime = Field(default_factory=now_utc())
     created_by: str
-    updated_at: datetime = Field(default_factory=now)
+    updated_at: datetime = Field(default_factory=now_utc())
     updated_by: str
     entity_status: str = "Active"
 
@@ -598,15 +595,15 @@ class IssueActivityViewBase(BaseModel):
     issue_activity_id: str
     comment_by: str
     comment_by_name: str
-    comment_at: datetime = Field(default_factory=now)
+    comment_at: datetime
     comment: str
-    created_at: datetime = Field(default_factory=now)
+    created_at: datetime
     created_by: str
     created_by_name: str
-    updated_at: datetime = Field(default_factory=now)
+    updated_at: datetime
     updated_by: str
     updated_by_name: str
-    entity_status: str = "Active"
+    entity_status: str
 
 
 class IssueActivityCreate(BaseModel):
@@ -635,7 +632,7 @@ class AuditLogBase(BaseModel):
     entity_type: str
     entity_id: str
     action: str
-    action_date: datetime = Field(default_factory=now)
+    action_date: datetime = Field(default_factory=now_utc())
     action: str
     old_value: Optional[str] = None
     new_value: Optional[str] = None
