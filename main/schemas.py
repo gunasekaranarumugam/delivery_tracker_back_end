@@ -13,7 +13,6 @@ class EmployeeBase(BaseModel):
     employee_full_name: str
     employee_email_address: str
     password: str
-    business_unit_id: str
     created_at: datetime = Field(default_factory=now)
     created_by: str
     updated_at: datetime = Field(default_factory=now)
@@ -22,10 +21,10 @@ class EmployeeBase(BaseModel):
 
 
 class EmployeeViewBase(BaseModel):
-    business_unit_id: str
-    business_unit_name: str
-    business_unit_head_id: str
-    business_unit_head_name: str
+    business_unit_id: Optional[str]
+    business_unit_name: Optional[str]
+    business_unit_head_id: Optional[str]
+    business_unit_head_name: Optional[str]
     employee_id: str
     employee_full_name: str
     employee_email_address: str
@@ -34,7 +33,7 @@ class EmployeeViewBase(BaseModel):
     created_by_name: str
     updated_at: datetime = Field(default_factory=now)
     updated_by: str
-    updated_by_name: Optional[str]
+    updated_by_name: str
     entity_status: str = "Active"
 
 
