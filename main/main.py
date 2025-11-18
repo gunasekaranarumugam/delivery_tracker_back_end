@@ -2,21 +2,23 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from routers import (
-    auditlog,
-    businessunit,
+    audit_log,
+    business_unit,
     deliverable,
     employee,
+    employee_business_unit,
     issue,
     issue_activity,
     project,
     task,
-    taskstatus,
-    tasktype,
+    task_status,
+    task_type,
 )
 
 
 openapi_tags = [
-    {"name": "Employee", "description": "Manage employee records"},
+    {"name": "Employee", "description": "Manage employee details"},
+    {"name": "EmployeeBusinessUnit", "description": "Manage employee business unit"},
     {"name": "BusinessUnit", "description": "Manage business units"},
     {"name": "Project", "description": "Create and manage projects"},
     {"name": "Deliverable", "description": "Track project deliverables"},
@@ -33,7 +35,7 @@ openapi_tags = [
 
 app = FastAPI(
     title="Delivery Tracker API",
-    description="Simple API for managing delivery tracker tables.",
+    description="API for managing delivery tracker tables.",
     version="v1.0",
     openapi_tags=openapi_tags,
 )
@@ -52,20 +54,25 @@ app.add_middleware(
 
 app.include_router(employee.router, prefix="/api/Employees", tags=["Employee"])
 app.include_router(
-    businessunit.router, prefix="/api/BusinessUnit", tags=["BusinessUnit"]
+    employee_business_unit.router,
+    prefix="/api/EmployeesBusinessUnit",
+    tags=["EmployeeBusinessUnit"],
+)
+app.include_router(
+    business_unit.router, prefix="/api/BusinessUnit", tags=["BusinessUnit"]
 )
 app.include_router(project.router, prefix="/api/Projects", tags=["Project"])
 app.include_router(deliverable.router, prefix="/api/Deliverables", tags=["Deliverable"])
 app.include_router(task.router, prefix="/api/Tasks", tags=["Task"])
-app.include_router(tasktype.router, prefix="/api/Task-Type", tags=["TaskType"])
-app.include_router(taskstatus.router, prefix="/api/Task-Status", tags=["TaskStatus"])
+app.include_router(task_type.router, prefix="/api/TaskType", tags=["TaskType"])
+app.include_router(task_status.router, prefix="/api/TaskStatus", tags=["TaskStatus"])
 app.include_router(issue.router, prefix="/api/Issues", tags=["Issue"])
 app.include_router(
     issue_activity.router, prefix="/api/IssueActivities", tags=["IssueActivity"]
 )
-app.include_router(auditlog.router, prefix="/api/Audit", tags=["AuditLog"])
+app.include_router(audit_log.router, prefix="/api/Audit", tags=["AuditLog"])
 
 
 @app.get("/")
 def root():
-    return {"message": "Delivery Tracker API (v1.0) - running"}
+    return {"message": "Delivery Tracker API - running"}
