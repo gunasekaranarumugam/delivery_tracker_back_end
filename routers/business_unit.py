@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -6,16 +5,13 @@ from sqlalchemy.exc import DBAPIError, IntegrityError, OperationalError
 from sqlalchemy.orm import Session
 
 from main import crud, models, schemas
-from main.database import get_db, handle_db_error
+from main.database import get_db
+from main.utils import handle_db_error, now_utc
 
 from .employee import get_current_employee
 
 
 router = APIRouter()
-
-
-def now():
-    return datetime.utcnow()
 
 
 @router.post("/", response_model=schemas.BusinessUnitViewBase)
@@ -27,9 +23,9 @@ def create_business_unit(
     try:
         business_unit = models.BusinessUnit(
             **payload.model_dump(),
-            created_at=now(),
+            created_at=now_utc(),
             created_by=current_employee.employee_id,
-            updated_at=now(),
+            updated_at=now_utc(),
             updated_by=current_employee.employee_id,
             entity_status="Active",
         )
@@ -75,7 +71,7 @@ def create_business_unit(
         )
 
 
-@router.get("/", response_model=List[schemas.BusinessUnitRead])
+@router.get("/", response_model=List[schemas.BusinessUnitViewBase])
 def list_business_units(db: Session = Depends(get_db)):
     try:
         business_unit_view = (
@@ -96,7 +92,7 @@ def list_business_units(db: Session = Depends(get_db)):
         )
 
 
-@router.get("/{id}", response_model=schemas.BusinessUnitRead)
+@router.get("/{id}", response_model=schemas.BusinessUnitViewBase)
 def get_business_unit(id: str, db: Session = Depends(get_db)):
     try:
         business_unit_view = (
@@ -119,7 +115,7 @@ def get_business_unit(id: str, db: Session = Depends(get_db)):
         )
 
 
-@router.put("/{id}", response_model=schemas.BusinessUnitUpdate)
+@router.put("/{id}", response_model=schemas.BusinessUnitViewBase)
 def update_business_unit(
     id: str,
     payload: schemas.BusinessUnitUpdate,
@@ -150,7 +146,7 @@ def update_business_unit(
             if not hasattr(business_unit, key):
                 continue
             setattr(business_unit, key, value)
-        business_unit.updated_at = now()
+        business_unit.updated_at = now_utc()
         business_unit.updated_by = current_employee.employee_id
     except Exception as e:
         raise HTTPException(
@@ -214,7 +210,7 @@ def archive_business_unit(
         )
     try:
         business_unit.entity_status = "Archived"
-        business_unit.updated_at = now()
+        business_unit.updated_at = now_utc()
         business_unit.updated_by = current_employee.employee_id
     except Exception as e:
         raise HTTPException(
