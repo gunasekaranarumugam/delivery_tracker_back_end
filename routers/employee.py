@@ -1,135 +1,55 @@
-import random
-import string
-from datetime import datetime, timedelta, timezone
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jose import JWTError, jwt
-from passlib.context import CryptContext
-from pydantic import BaseModel, EmailStr
+from login import get_current_employee, hash_password
 from sqlalchemy.exc import DBAPIError, IntegrityError, OperationalError
 from sqlalchemy.orm import Session
 
 from main import crud, models, schemas
 from main.database import get_db
+from main.utils import handle_db_error, now_utc
 
 
 router = APIRouter()
 
 
-def generate_employee_id(length=10):
-    return "".join(random.choices(string.ascii_uppercase + string.digits, k=length))
-
-
-def now_utc():
-    return datetime.now(timezone.utc)
-
-
-SECRET_KEY = "YOUR_SECRET_KEY_HERE"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
-
-TOKEN_BLACKLIST = set()
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/Employees/login")
-
-pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
-
-
-def hash_password(password: str):
-    return pwd_context.hash(password)
-
-
-def verify_password(plain_password: str, hashed_password: str):
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-def create_access_token(data: dict, expires_delta: timedelta = None):
-    to_encode = data.copy()
-    expire = datetime.utcnow() + (
-        expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    )
-    to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-
-
-def decode_access_token(token: str):
-    print("🔑 Token received:", token)
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email = payload.get("sub")
-        print(email)
-        if email is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        return email
-    except JWTError as e:
-        print("❌ JWTError:", e)
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-
-def get_current_employee(
-    token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
-):
-    if not token:
-        raise HTTPException(status_code=401, detail="Missing authentication token")
-
-    email = decode_access_token(token)
-    employee = (
-        db.query(models.Employee)
-        .filter(models.Employee.employee_email_address == email)
-        .first()
-    )
-
-    return employee
-
-
-def handle_db_error(db: Session, e: Exception, operation: str):
-    db.rollback()
-    if isinstance(e, IntegrityError):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"{operation} failed due to a data constraint violation.",
-        )
-    if isinstance(e, OperationalError):
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"{operation} failed: Database operational error.",
-        )
-    if isinstance(e, DBAPIError):
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"{operation} failed: Database error.",
-        )
-    raise HTTPException(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        detail=f"Unexpected error during {operation}.",
-    )
-
-
-@router.post(
-    "/", response_model=schemas.EmployeeRead, status_code=status.HTTP_201_CREATED
-)
+@router.post("/", response_model=schemas.EmployeeViewBase)
 def create_employee(
-    payload: schemas.EmployeeRegister,
+    payload: schemas.EmployeeCreate,
     db: Session = Depends(get_db),
     current_employee: models.Employee = Depends(get_current_employee),
 ):
     try:
         employee = models.Employee(
-            employee_id=payload.employee_id or generate_employee_id(),
+            employee_id=payload.employee_id,
             employee_full_name=payload.employee_full_name,
             employee_email_address=payload.employee_email_address,
             password=hash_password(payload.password),
-            business_unit_id=payload.business_unit_id,
+            created_at=now_utc(),
             created_by=current_employee.employee_id,
+            updated_at=now_utc(),
             updated_by=current_employee.employee_id,
             entity_status="Active",
         )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=(
+                f"Failed to initialize Employee model. "
+                f"Check required fields or data types: {e}"
+            ),
+        )
+    try:
         db.add(employee)
         db.commit()
         db.refresh(employee)
-
+    except (IntegrityError, DBAPIError, OperationalError) as e:
+        db.rollback()
+        handle_db_error(db, e, "Employee creation")
+    except Exception as e:
+        db.rollback()
+        handle_db_error(db, e, "Employee creation (unexpected)")
+    try:
         crud.audit_log(
             db,
             "Employee",
@@ -137,40 +57,67 @@ def create_employee(
             "Create",
             changed_by=current_employee.employee_id,
         )
-
+    except Exception:
+        pass
+    try:
         employee_view = (
             db.query(models.EmployeeView)
-            .filter(models.EmployeeView.employee_id == employee.employee_id)
-            .first()
+            .filter(models.EmployeeView.entity_status == "Active")
+            .all()
         )
         return employee_view
-    except Exception as e:
-        handle_db_error(db, e, "Employee creation")
-
-
-@router.get("/", response_model=List[schemas.EmployeeRead])
-def list_employees(db: Session = Depends(get_db)):
-    try:
-        return db.query(models.EmployeeView).all()
-    except Exception as e:
+    except (DBAPIError, OperationalError):
         raise HTTPException(
-            status_code=500, detail=f"Error listing employees: {str(e)}"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error while fetching created Employee view.",
         )
 
 
-@router.get("/{id}", response_model=schemas.EmployeeRead)
+@router.get("/", response_model=List[schemas.EmployeeViewBase])
+def list_employees(db: Session = Depends(get_db)):
+    try:
+        employee_view = (
+            db.query(models.EmployeeView)
+            .filter(models.EmployeeView.entity_status == "Active")
+            .all()
+        )
+        return employee_view
+    except (DBAPIError, OperationalError):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error while fetching Employee list.",
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred while listing Employee: {e}",
+        )
+
+
+@router.get("/{id}", response_model=schemas.EmployeeViewBase)
 def get_employee(id: str, db: Session = Depends(get_db)):
-    employee_view = (
-        db.query(models.EmployeeView)
-        .filter(models.EmployeeView.employee_id == id)
-        .first()
-    )
-    if not employee_view:
-        raise HTTPException(status_code=404, detail="Employee not found")
-    return employee_view
+    try:
+        employee_view = (
+            db.query(models.EmployeeView)
+            .filter(models.EmployeeView.employee_id == id)
+            .first()
+        )
+        if not employee_view:
+            raise HTTPException(status_code=404, detail="Employee not found")
+        return employee_view
+    except (DBAPIError, OperationalError):
+        raise HTTPException(
+            status_code=500,
+            detail="Database error while fetching Employee details.",
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred while fetching Employee details: {e}",
+        )
 
 
-@router.put("/{id}", response_model=schemas.EmployeeRead)
+@router.put("/{id}", response_model=schemas.EmployeeViewBase)
 def update_employee(
     id: str,
     payload: schemas.EmployeeUpdate,
@@ -179,23 +126,46 @@ def update_employee(
 ):
     try:
         employee = (
-            db.query(models.Employee).filter(models.Employee.employee_id == id).first()
+            db.query(models.employee).filter(models.employee.employee_id == id).first()
         )
         if not employee:
-            raise HTTPException(status_code=404, detail="Employee not found")
-
-        for key, value in payload.model_dump(exclude_unset=True).items():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Employee not found",
+            )
+    except (DBAPIError, OperationalError):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error while fetching Employee for update.",
+        )
+    try:
+        update_data = payload.model_dump()
+        for key, value in update_data.items():
+            if value is None:
+                continue
+            if not hasattr(employee, key):
+                continue
             if key == "password":
                 setattr(employee, key, hash_password(value))
             else:
                 setattr(employee, key, value)
-
         employee.updated_at = now_utc()
         employee.updated_by = current_employee.employee_id
-
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to apply update payload: {e}",
+        )
+    try:
         db.commit()
         db.refresh(employee)
-
+    except (IntegrityError, DBAPIError, OperationalError) as e:
+        db.rollback()
+        handle_db_error(db, e, "Employee update")
+    except Exception as e:
+        db.rollback()
+        handle_db_error(db, e, "Employee update (unexpected)")
+    try:
         crud.audit_log(
             db,
             entity_type="Employee",
@@ -203,92 +173,85 @@ def update_employee(
             action="Update",
             changed_by=current_employee.employee_id,
         )
-
+    except Exception:
+        pass
+    try:
         employee_view = (
             db.query(models.EmployeeView)
-            .filter(models.EmployeeView.employee_id == employee.employee_id)
-            .first()
+            .filter(models.EmployeeView.entity_status == "Active")
+            .all()
+        )
+        return employee_view
+    except (DBAPIError, OperationalError):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error while querying Employee view after update.",
         )
 
-        if not employee_view:
-            raise HTTPException(
-                status_code=404, detail="Employee view not found after update"
-            )
 
-        return employee_view
-
-    except Exception as e:
-        handle_db_error(db, e, "Employee update")
-
-
-@router.patch("/{id}/archive")
+@router.patch("/{id}/archive", response_model=schemas.EmployeeViewBase)
 def archive_employee(
     id: str,
     db: Session = Depends(get_db),
     current_employee: models.Employee = Depends(get_current_employee),
 ):
-    employee = (
-        db.query(models.Employee).filter(models.Employee.employee_id == id).first()
-    )
-    if not employee:
-        raise HTTPException(status_code=404, detail="Employee not found")
-
-    employee.entity_status = "ARCHIVED"
-    employee.updated_at = now_utc()
-    employee.updated_by = current_employee.employee_id
-
-    db.commit()
-    db.refresh(employee)
-
-    return {
-        "message": "Employee archived successfully",
-        "employee_id": employee.employee_id,
-    }
-
-
-class LoginPayload(BaseModel):
-    email: EmailStr
-    password: str
-
-
-@router.post("/login")
-def login(
-    form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
-):
-    user = (
-        db.query(models.Employee)
-        .filter(models.Employee.employee_email_address == form_data.username)
-        .first()
-    )
-
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-
-    if not verify_password(form_data.password, user.password):
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-
-    if getattr(user, "is_archived", False):
-        raise HTTPException(
-            status_code=403, detail="Employee is archived and cannot login"
+    try:
+        employee = (
+            db.query(models.employee).filter(models.employee.employee_id == id).first()
         )
-
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.employee_email_address},
-        expires_delta=access_token_expires,
-    )
-
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "employee_id": user.employee_id,
-        "employee_full_name": user.employee_full_name,
-        "employee_email_address": user.employee_email_address,
-        "business_unit_id": user.business_unit_id,
-    }
-
-
-@router.post("/logout")
-def logout_employee(token: str = Depends(oauth2_scheme)):
-    TOKEN_BLACKLIST.add(token)
-    return {"message": "Logout successful"}
+        if not employee:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Employee not found",
+            )
+    except (DBAPIError, OperationalError):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error while fetching Employee for update.",
+        )
+    try:
+        employee.entity_status = "Archived"
+        employee.updated_at = now_utc()
+        employee.updated_by = current_employee.employee_id
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to apply update payload: {e}",
+        )
+    except (IntegrityError, DBAPIError, OperationalError) as e:
+        db.rollback()
+        handle_db_error(db, e, "Employee update")
+    except Exception as e:
+        db.rollback()
+        handle_db_error(db, e, "Employee update (unexpected)")
+    try:
+        db.commit()
+        db.refresh(employee)
+    except (IntegrityError, DBAPIError, OperationalError) as e:
+        db.rollback()
+        handle_db_error(db, e, "Employee update")
+    except Exception as e:
+        db.rollback()
+        handle_db_error(db, e, "Employee update (unexpected)")
+    try:
+        crud.audit_log(
+            db,
+            entity_type="Employee",
+            entity_id=employee.employee_id,
+            action="Update",
+            changed_by=current_employee.employee_id,
+        )
+    except Exception:
+        pass
+    try:
+        employee_view = (
+            db.query(models.EmployeeView)
+            .filter(models.EmployeeView.entity_status == "Active")
+            .all()
+        )
+        return employee_view
+    except (DBAPIError, OperationalError):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error while querying Employee view after update.",
+        )
