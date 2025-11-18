@@ -14,7 +14,7 @@ from .employee import get_current_employee
 router = APIRouter()
 
 
-@router.post("/", response_model=schemas.BusinessUnitViewBase)
+@router.post("/", response_model=List[schemas.BusinessUnitViewBase])
 def create_business_unit(
     payload: schemas.BusinessUnitCreate,
     db: Session = Depends(get_db),
@@ -175,8 +175,8 @@ def update_business_unit(
     try:
         business_unit_view = (
             db.query(models.BusinessUnitView)
-            .filter(models.BusinessUnitView.entity_status == "Active")
-            .all()
+            .filter(models.BusinessUnitView.business_unit_id == id)
+            .first()
         )
         return business_unit_view
     except (DBAPIError, OperationalError):
@@ -186,7 +186,7 @@ def update_business_unit(
         )
 
 
-@router.patch("/{id}/archive")
+@router.patch("/{id}/archive", response_model=List[schemas.BusinessUnitViewBase])
 def archive_business_unit(
     id: str,
     db: Session = Depends(get_db),

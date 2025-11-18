@@ -96,7 +96,6 @@ class BusinessUnitUpdate(BaseModel):
     business_unit_name: Optional[str] = None
     business_unit_description: Optional[str] = None
     business_unit_head_id: Optional[str] = None
-    business_unit_head_name: Optional[str] = None
 
 
 class BusinessUnitPatch(BaseModel):
