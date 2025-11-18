@@ -1,5 +1,6 @@
 import uuid
-from datetime import datetime
+
+from utils import now_utc
 
 from main import models
 
@@ -25,7 +26,7 @@ def audit_log(
         old_value=old_value,
         new_value=new_value,
         changed_by=changed_by,
-        changed_at=datetime.utcnow(),
+        changed_at=now_utc(),
     )
     db.add(al)
     db.commit()
