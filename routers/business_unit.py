@@ -25,11 +25,11 @@ def create_business_unit(
     current_employee: models.Employee = Depends(get_current_employee),
 ):
     try:
-        bu = models.BusinessUnit(
+        business_unit = models.BusinessUnit(
             **payload.model_dump(),
             created_at=now(),
-            updated_at=now(),
             created_by=current_employee.employee_id,
+            updated_at=now(),
             updated_by=current_employee.employee_id,
             entity_status="Active",
         )
@@ -42,9 +42,9 @@ def create_business_unit(
             ),
         )
     try:
-        db.add(bu)
+        db.add(business_unit)
         db.commit()
-        db.refresh(bu)
+        db.refresh(business_unit)
     except (IntegrityError, DBAPIError, OperationalError) as e:
         db.rollback()
         handle_db_error(db, e, "Business Unit creation")
@@ -55,59 +55,68 @@ def create_business_unit(
         crud.audit_log(
             db,
             "Business Unit",
-            bu.business_unit_id,
+            business_unit.business_unit_id,
             "Create",
             changed_by=current_employee.employee_id,
         )
     except Exception:
         pass
     try:
-        bu_view = (
+        business_unit_view = (
             db.query(models.BusinessUnitView)
-            .filter(models.BusinessUnitView.business_unit_id == bu.business_unit_id)
-            .first()
+            .filter(models.BusinessUnitView.entity_status == "Active")
+            .all()
         )
-        return bu_view
+        return business_unit_view
     except (DBAPIError, OperationalError):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database error while retrieving created Business Unit view.",
+            detail="Database error while fetching created Business Unit view.",
         )
 
 
 @router.get("/", response_model=List[schemas.BusinessUnitRead])
 def list_business_units(db: Session = Depends(get_db)):
     try:
-        return (
+        business_unit_view = (
             db.query(models.BusinessUnitView)
             .filter(models.BusinessUnitView.entity_status == "Active")
             .all()
         )
+        return business_unit_view
     except (DBAPIError, OperationalError):
         raise HTTPException(
-            status_code=500, detail="Database error while fetching Business Units list."
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error while fetching Business Unit list.",
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred while listing Business Unit: {e}",
+        )
 
 
 @router.get("/{id}", response_model=schemas.BusinessUnitRead)
 def get_business_unit(id: str, db: Session = Depends(get_db)):
     try:
-        bu = (
+        business_unit_view = (
             db.query(models.BusinessUnitView)
             .filter(models.BusinessUnitView.business_unit_id == id)
             .first()
         )
-        if not bu:
+        if not business_unit_view:
             raise HTTPException(status_code=404, detail="Business Unit not found")
-        return bu
+        return business_unit_view
     except (DBAPIError, OperationalError):
         raise HTTPException(
-            status_code=500, detail="Database error while fetching Business Unit."
+            status_code=500,
+            detail="Database error while fetching Business Unit details.",
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred while fetching Business Unit details: {e}",
+        )
 
 
 @router.put("/{id}", response_model=schemas.BusinessUnitUpdate, status_code=200)
@@ -118,93 +127,125 @@ def update_business_unit(
     current_employee: models.Employee = Depends(get_current_employee),
 ):
     try:
-        bu = (
+        business_unit = (
             db.query(models.BusinessUnit)
             .filter(models.BusinessUnit.business_unit_id == id)
             .first()
         )
-
-        if not bu:
-            bu = models.BusinessUnit(
-                business_unit_id=id,
-                business_unit_name=payload.business_unit_name or "Unnamed BU",
-                business_unit_head_id=payload.business_unit_head_id
-                or current_employee.employee_id,
-                business_unit_description=payload.business_unit_description
-                or "No description",
-                created_at=now(),
-                updated_at=now(),
-                created_by=current_employee.employee_id,
-                updated_by=current_employee.employee_id,
-                entity_status=payload.entity_status or "Active",
-            )
-            db.add(bu)
-            action = "Create"
-        else:
-            update_data = payload.model_dump(exclude_unset=True)
-            for key, value in update_data.items():
-                setattr(bu, key, value)
-
-            bu.updated_at = now()
-            bu.updated_by = current_employee.employee_id
-            action = "Update"
-
-        db.commit()
-        db.refresh(bu)
-
-        bu_view = (
-            db.query(models.BusinessUnitView)
-            .filter(models.BusinessUnitView.business_unit_id == bu.business_unit_id)
-            .first()
-        )
-
-        if not bu_view:
+        if not business_unit:
             raise HTTPException(
-                status_code=404, detail="Business Unit view not found after update"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Business Unit not found",
             )
-
+    except (DBAPIError, OperationalError):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error while fetching Business Unit for update.",
+        )
+    try:
+        update_data = payload.model_dump()
+        for key, value in update_data.items():
+            if value is None:
+                continue
+            if not hasattr(business_unit, key):
+                continue
+            setattr(business_unit, key, value)
+        business_unit.updated_at = now()
+        business_unit.updated_by = current_employee.employee_id
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to apply update payload: {e}",
+        )
+    try:
+        db.commit()
+        db.refresh(business_unit)
+    except (IntegrityError, DBAPIError, OperationalError) as e:
+        db.rollback()
+        handle_db_error(db, e, "Business Unit update")
+    except Exception as e:
+        db.rollback()
+        handle_db_error(db, e, "Business Unit update (unexpected)")
+    try:
         crud.audit_log(
             db,
             entity_type="BusinessUnit",
-            entity_id=bu.business_unit_id,
-            action=action,
+            entity_id=business_unit.business_unit_id,
+            action="Update",
             changed_by=current_employee.employee_id,
         )
-
-        return bu_view
-
-    except (DBAPIError, OperationalError):
-        db.rollback()
-        raise HTTPException(
-            status_code=500, detail="Database error while updating Business Unit."
+    except Exception:
+        pass
+    try:
+        business_unit_view = (
+            db.query(models.BusinessUnitView)
+            .filter(models.BusinessUnitView.entity_status == "Active")
+            .all()
         )
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+        return business_unit_view
+    except (DBAPIError, OperationalError):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error while querying Business Unit view after update.",
+        )
 
 
 @router.patch("/{id}/archive")
 def archive_business_unit(
     id: str,
     db: Session = Depends(get_db),
-    current_user: models.Employee = Depends(get_current_employee),
+    current_employee: models.Employee = Depends(get_current_employee),
 ):
-    bu = (
-        db.query(models.BusinessUnit)
-        .filter(models.BusinessUnit.business_unit_id == id)
-        .first()
-    )
-    if not bu:
-        raise HTTPException(status_code=404, detail="Business Unit not found")
-
-    bu.entity_status = "ARCHIVED"
-    bu.updated_at = now()
-    bu.updated_by = current_user.employee_id
-
-    db.commit()
-    db.refresh(bu)
-
-    return {
-        "message": "Business Unit archived successfully",
-        "business_unit_id": bu.business_unit_id,
-    }
+    try:
+        business_unit = (
+            db.query(models.BusinessUnit)
+            .filter(models.BusinessUnit.business_unit_id == id)
+            .first()
+        )
+        if not business_unit:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Business Unit not found",
+            )
+    except (DBAPIError, OperationalError):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error while fetching Business Unit for update.",
+        )
+    try:
+        business_unit.entity_status = "Archived"
+        business_unit.updated_at = now()
+        business_unit.updated_by = current_employee.employee_id
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to apply update payload: {e}",
+        )
+    except (IntegrityError, DBAPIError, OperationalError) as e:
+        db.rollback()
+        handle_db_error(db, e, "Business Unit update")
+    except Exception as e:
+        db.rollback()
+        handle_db_error(db, e, "Business Unit update (unexpected)")
+    try:
+        crud.audit_log(
+            db,
+            entity_type="BusinessUnit",
+            entity_id=business_unit.business_unit_id,
+            action="Update",
+            changed_by=current_employee.employee_id,
+        )
+    except Exception:
+        pass
+    try:
+        business_unit_view = (
+            db.query(models.BusinessUnitView)
+            .filter(models.BusinessUnitView.entity_status == "Active")
+            .all()
+        )
+        return business_unit_view
+    except (DBAPIError, OperationalError):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error while querying Business Unit view after update.",
+        )

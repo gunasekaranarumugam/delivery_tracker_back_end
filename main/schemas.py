@@ -73,8 +73,8 @@ class EmployeePatch(BaseModel):
 class BusinessUnitBase(BaseModel):
     business_unit_id: str
     business_unit_name: str
-    business_unit_head_id: str
     business_unit_description: str
+    business_unit_head_id: str
     created_at: datetime = Field(default_factory=now)
     created_by: str
     updated_at: datetime = Field(default_factory=now)
