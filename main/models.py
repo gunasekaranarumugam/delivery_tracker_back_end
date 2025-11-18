@@ -17,6 +17,16 @@ class Employee(Base):
     employee_full_name = Column(String(100))
     employee_email_address = Column(String(100))
     password = Column(String(100))
+    created_at = Column(DateTime, default=now)
+    created_by = Column(String(10))
+    updated_at = Column(DateTime, default=now)
+    updated_by = Column(String(10))
+    entity_status = Column(String(10), default="Active")
+
+
+class EmployeeBusinessUnit(Base):
+    __tablename__ = "employee_business_unit"
+    employee_id = Column(String(10), primary_key=True, index=True)
     business_unit_id = Column(String(10))
     created_at = Column(DateTime, default=now)
     created_by = Column(String(10))
