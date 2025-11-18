@@ -119,7 +119,7 @@ def get_business_unit(id: str, db: Session = Depends(get_db)):
         )
 
 
-@router.put("/{id}", response_model=schemas.BusinessUnitUpdate, status_code=200)
+@router.put("/{id}", response_model=schemas.BusinessUnitUpdate)
 def update_business_unit(
     id: str,
     payload: schemas.BusinessUnitUpdate,
