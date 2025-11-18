@@ -26,16 +26,16 @@ class Employee(Base):
 
 class EmployeeView(Base):
     __tablename__ = "vw_employee"
-    employee_id = Column(String(10), primary_key=True, index=True)
+    employee_id = Column(String(10))
     employee_full_name = Column(String(100))
     employee_email_address = Column(String(100))
-    created_at = Column(DateTime, default=now)
+    created_at = Column(DateTime)
     created_by = Column(String(10))
     created_by_name = Column(String(100))
-    updated_at = Column(DateTime, default=now)
+    updated_at = Column(DateTime)
     updated_by = Column(String(10))
     updated_by_name = Column(String(100))
-    entity_status = Column(String(10), default="Active")
+    entity_status = Column(String(10))
 
 
 class BusinessUnit(Base):
@@ -53,18 +53,18 @@ class BusinessUnit(Base):
 
 class BusinessUnitView(Base):
     __tablename__ = "vw_business_unit"
-    business_unit_id = Column(String(10), primary_key=True, index=True)
+    business_unit_id = Column(String(10))
     business_unit_name = Column(String(100))
     business_unit_description = Column(String(4000))
     business_unit_head_id = Column(String(10))
     business_unit_head_name = Column(String(100))
-    created_at = Column(DateTime, default=now)
+    created_at = Column(DateTime)
     created_by = Column(String(10))
     created_by_name = Column(String(100))
-    updated_at = Column(DateTime, default=now)
+    updated_at = Column(DateTime)
     updated_by = Column(String(10))
     updated_by_name = Column(String(100))
-    entity_status = Column(String(10), default="Active")
+    entity_status = Column(String(10))
 
 
 class EmployeeBusinessUnit(Base):
@@ -84,16 +84,16 @@ class EmployeeBusinessUnitView(Base):
     business_unit_name = Column(String(100))
     business_unit_head_id = Column(String(10))
     business_unit_head_name = Column(String(100))
-    employee_id = Column(String(10), primary_key=True, index=True)
+    employee_id = Column(String(10))
     employee_full_name = Column(String(100))
     employee_email_address = Column(String(100))
-    created_at = Column(DateTime, default=now)
+    created_at = Column(DateTime)
     created_by = Column(String(10))
     created_by_name = Column(String(100))
-    updated_at = Column(DateTime, default=now)
+    updated_at = Column(DateTime)
     updated_by = Column(String(10))
     updated_by_name = Column(String(100))
-    entity_status = Column(String(10), default="Active")
+    entity_status = Column(String(10))
 
 
 class Project(Base):

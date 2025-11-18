@@ -21,28 +21,23 @@ class EmployeeBase(BaseModel):
 
 
 class EmployeeViewBase(BaseModel):
-    business_unit_id: Optional[str]
-    business_unit_name: Optional[str]
-    business_unit_head_id: Optional[str]
-    business_unit_head_name: Optional[str]
     employee_id: str
     employee_full_name: str
     employee_email_address: str
-    created_at: datetime = Field(default_factory=now)
+    created_at: datetime
     created_by: str
     created_by_name: str
-    updated_at: datetime = Field(default_factory=now)
+    updated_at: datetime
     updated_by: str
     updated_by_name: str
-    entity_status: str = "Active"
+    entity_status: str
 
 
-class EmployeeRegister(BaseModel):
+class EmployeeCreate(BaseModel):
     employee_id: str
     employee_full_name: str
     employee_email_address: str
     password: str
-    business_unit_id: str
 
 
 class EmployeeRead(EmployeeViewBase):
@@ -57,17 +52,12 @@ class EmployeeLoginResponse(BaseModel):
 
 
 class EmployeeUpdate(BaseModel):
-    business_unit_id: Optional[str] = None
-    business_unit_name: Optional[str] = None
-    business_unit_head_id: Optional[str] = None
-    business_unit_head_name: Optional[str] = None
-    employee_full_name: Optional[str] = None
-    employee_email_address: Optional[str] = None
-    business_unit_id: Optional[str] = None
+    employee_full_name: str
+    employee_email_address: str
 
 
 class EmployeePatch(BaseModel):
-    entity_status: Optional[str] = None
+    entity_status: str
 
 
 class BusinessUnitBase(BaseModel):
@@ -88,13 +78,13 @@ class BusinessUnitViewBase(BaseModel):
     business_unit_description: str
     business_unit_head_id: str
     business_unit_head_name: str
-    created_at: datetime = Field(default_factory=now)
+    created_at: datetime
     created_by: str
     created_by_name: str
-    updated_at: datetime = Field(default_factory=now)
+    updated_at: datetime
     updated_by: str
     updated_by_name: str
-    entity_status: str = "Active"
+    entity_status: str
 
 
 class BusinessUnitCreate(BaseModel):
