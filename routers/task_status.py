@@ -119,7 +119,7 @@ def list_task_status(
     try:
         task_status_view = (
             db.query(models.TaskStatusView)
-            .filter(models.TaskStatusView.entity_status != "ARCHIVED")
+            .filter(models.TaskStatusView.entity_status == "Active")
             .all()
         )
         return task_status_view
@@ -131,7 +131,7 @@ def list_task_status(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An unexpected error occurred while listing Task Statuses: {e}",
+            detail=f"An unexpected error occurred while listing Task Status: {e}",
         )
 
 
@@ -220,21 +220,21 @@ def update_task_status(
         db.rollback()
         handle_db_error(db, e, "Task Status update (unexpected)")
     try:
+        crud.audit_log(
+            db,
+            "TaskStatus",
+            task_status.task_status_id,
+            "Update",
+            changed_by=current_employee.employee_id,
+        )
+    except Exception:
+        pass
+    try:
         task_status_view = (
             db.query(models.TaskStatusView)
             .filter(models.TaskStatusView.task_status_id == task_status.task_status_id)
             .first()
         )
-        try:
-            crud.audit_log(
-                db,
-                "TaskStatus",
-                task_status.task_status_id,
-                "Update",
-                changed_by=current_employee.employee_id,
-            )
-        except Exception:
-            pass
         return task_status_view if task_status_view else task_status
     except (DBAPIError, OperationalError):
         raise HTTPException(

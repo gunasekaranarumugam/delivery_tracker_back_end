@@ -1,8 +1,8 @@
 import uuid
 
-from utils import now_utc
-
 from main import models
+
+from .utils import now_utc
 
 
 def audit_log(

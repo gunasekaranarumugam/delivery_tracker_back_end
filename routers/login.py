@@ -21,7 +21,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 TOKEN_BLACKLIST = set()
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/Employees/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
@@ -73,7 +73,7 @@ class LoginPayload(BaseModel):
     password: str
 
 
-@router.post("/login")
+@router.post("/")
 def login(
     form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
 ):

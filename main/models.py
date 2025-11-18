@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Date, DateTime, String
 from sqlalchemy.ext.declarative import declarative_base
-from utils import now_utc
+
+from .utils import now_utc
 
 
 Base = declarative_base()
@@ -21,7 +22,7 @@ class Employee(Base):
 
 class EmployeeView(Base):
     __tablename__ = "vw_employee"
-    employee_id = Column(String(10))
+    employee_id = Column(String(10), primary_key=True, index=True)
     employee_full_name = Column(String(100))
     employee_email_address = Column(String(100))
     created_at = Column(DateTime)
@@ -48,7 +49,7 @@ class BusinessUnit(Base):
 
 class BusinessUnitView(Base):
     __tablename__ = "vw_business_unit"
-    business_unit_id = Column(String(10))
+    business_unit_id = Column(String(10), primary_key=True, index=True)
     business_unit_name = Column(String(100))
     business_unit_description = Column(String(4000))
     business_unit_head_id = Column(String(10))
@@ -75,11 +76,11 @@ class EmployeeBusinessUnit(Base):
 
 class EmployeeBusinessUnitView(Base):
     __tablename__ = "vw_employee_business_unit"
-    business_unit_id = Column(String(10))
+    business_unit_id = Column(String(10), primary_key=True, index=True)
     business_unit_name = Column(String(100))
     business_unit_head_id = Column(String(10))
     business_unit_head_name = Column(String(100))
-    employee_id = Column(String(10))
+    employee_id = Column(String(10), primary_key=True, index=True)
     employee_full_name = Column(String(100))
     employee_email_address = Column(String(100))
     created_at = Column(DateTime)
@@ -115,7 +116,7 @@ class ProjectView(Base):
     business_unit_name = Column(String(100))
     business_unit_head_id = Column(String(10))
     business_unit_head_name = Column(String(100))
-    project_id = Column(String(10))
+    project_id = Column(String(10), primary_key=True, index=True)
     project_name = Column(String(100))
     project_description = Column(String(4000))
     delivery_manager_id = Column(String(10))
@@ -161,7 +162,7 @@ class DeliverableView(Base):
     project_name = Column(String(100))
     delivery_manager_id = Column(String(10))
     delivery_manager_name = Column(String(100))
-    deliverable_id = Column(String(10))
+    deliverable_id = Column(String(10), primary_key=True, index=True)
     deliverable_name = Column(String(100))
     deliverable_description = Column(String(4000))
     priority = Column(String(100))
@@ -212,7 +213,7 @@ class TaskView(Base):
     delivery_manager_name = Column(String(100))
     deliverable_id = Column(String(10))
     deliverable_name = Column(String(100))
-    task_id = Column(String(10))
+    task_id = Column(String(10), primary_key=True, index=True)
     task_name = Column(String(100))
     task_description = Column(String(4000))
     task_type_id = Column(String(10))
@@ -250,7 +251,7 @@ class TaskType(Base):
 
 class TaskTypeView(Base):
     __tablename__ = "vw_task_type"
-    task_type_id = Column(String(10))
+    task_type_id = Column(String(10), primary_key=True, index=True)
     task_type_Name = Column(String(100))
     task_type_description = Column(String(4000))
     created_at = Column(DateTime)
@@ -291,7 +292,7 @@ class TaskStatusView(Base):
     deliverable_name = Column(String(100))
     task_id = Column(String(10))
     task_name = Column(String(100))
-    task_status_id = Column(String(10))
+    task_status_id = Column(String(10), primary_key=True, index=True)
     action_date = Column(Date)
     hours_spent = Column(String(10))
     progress = Column(String(10))
@@ -335,7 +336,7 @@ class IssueView(Base):
     deliverable_name = Column(String(100))
     task_id = Column(String(10))
     task_name = Column(String(100))
-    issue_id = Column(String(10))
+    issue_id = Column(String(10), primary_key=True, index=True)
     issue_title = Column(String(100))
     issue_description = Column(String(4000))
     issue_priority = Column(String(100))
@@ -380,7 +381,7 @@ class IssueActivityView(Base):
     task_id = Column(String(10))
     task_name = Column(String(100))
     issue_id = Column(String(10))
-    issue_activity_id = Column(String(10))
+    issue_activity_id = Column(String(10), primary_key=True, index=True)
     comment_by = Column(String(10))
     comment_by_name = Column(String(100))
     comment_at = Column(DateTime)

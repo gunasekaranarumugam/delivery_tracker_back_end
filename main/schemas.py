@@ -2,7 +2,8 @@ from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, Field
-from utils import now_utc
+
+from .utils import now_utc
 
 
 class EmployeeBase(BaseModel):
@@ -21,13 +22,13 @@ class EmployeeViewBase(BaseModel):
     employee_id: str
     employee_full_name: str
     employee_email_address: str
-    created_at: datetime
+    created_at: datetime = Field(default_factory=now_utc())
     created_by: str
     created_by_name: str
-    updated_at: datetime
+    updated_at: datetime = Field(default_factory=now_utc())
     updated_by: str
     updated_by_name: str
-    entity_status: str
+    entity_status: str = "Active"
 
 
 class EmployeeCreate(BaseModel):
@@ -173,7 +174,7 @@ class ProjectUpdate(BaseModel):
 
 class ProjectRead(ProjectViewBase):
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ProjectPatch(ProjectBase):
@@ -252,7 +253,7 @@ class DeliverableUpdate(BaseModel):
 
 class DeliverableRead(DeliverableViewBase):
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class DeliverablePatch(DeliverableBase):
@@ -350,7 +351,7 @@ class TaskUpdate(BaseModel):
 
 class TaskRead(TaskViewBase):
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class TaskPatch(TaskBase):
@@ -395,7 +396,7 @@ class TaskTypeUpdate(BaseModel):
 
 class TaskTypeRead(TaskTypeViewBase):
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class TaskTypePatch(TaskTypeBase):
@@ -475,7 +476,7 @@ class TaskStatusUpdate(BaseModel):
 
 class TaskStatusRead(TaskStatusViewBase):
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class TaskStatusPatch(TaskStatusBase):
@@ -557,7 +558,7 @@ class IssueUpdate(BaseModel):
 
 class IssueRead(IssueViewBase):
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class IssuePatch(IssueBase):
@@ -649,7 +650,7 @@ class AuditLogCreate(BaseModel):
 
 class AuditLogRead(AuditLogBase):
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class AuditLogPatch(BaseModel):

@@ -9,6 +9,7 @@ from routers import (
     employee_business_unit,
     issue,
     issue_activity,
+    login,
     project,
     task,
     task_status,
@@ -17,6 +18,7 @@ from routers import (
 
 
 openapi_tags = [
+    {"name": "Login", "description": "Authorize"},
     {"name": "Employee", "description": "Manage employee details"},
     {"name": "EmployeeBusinessUnit", "description": "Manage employee business unit"},
     {"name": "BusinessUnit", "description": "Manage business units"},
@@ -53,6 +55,7 @@ app.add_middleware(
 )
 
 app.include_router(employee.router, prefix="/api/Employees", tags=["Employee"])
+app.include_router(login.router, prefix="/api/login", tags=["Login"])
 app.include_router(
     employee_business_unit.router,
     prefix="/api/EmployeesBusinessUnit",
