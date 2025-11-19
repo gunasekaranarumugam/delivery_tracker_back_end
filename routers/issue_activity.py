@@ -44,9 +44,6 @@ def create_issue_activity(
     except (IntegrityError, DBAPIError, OperationalError) as e:
         db.rollback()
         handle_db_error(db, e, "Issue Activity creation")
-    except Exception as e:
-        db.rollback()
-        handle_db_error(db, e, "Issue Activity creation (unexpected)")
     try:
         crud.audit_log(
             db,
@@ -85,11 +82,6 @@ def list_issue_activities(db: Session = Depends(get_db)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Database error while fetching Issue Activity list.",
         )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An unexpected error occurred while listing Issue Activity : {e}",
-        )
 
 
 @router.get("/{id}", response_model=schemas.IssueActivityViewBase)
@@ -107,11 +99,6 @@ def get_issue_activity(id: str, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=500,
             detail="Database error while fetching Issue Activity details.",
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An unexpected error occurred while fetching Issue Activity details: {e}",
         )
 
 
@@ -159,9 +146,6 @@ def update_issue_activity(
     except (IntegrityError, DBAPIError, OperationalError) as e:
         db.rollback()
         handle_db_error(db, e, "Issue Activity update")
-    except Exception as e:
-        db.rollback()
-        handle_db_error(db, e, "Issue Activity update (unexpected)")
     try:
         crud.audit_log(
             db,
@@ -217,22 +201,12 @@ def archive_issue_activity(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to apply update payload: {e}",
         )
-    except (IntegrityError, DBAPIError, OperationalError) as e:
-        db.rollback()
-        handle_db_error(db, e, "Issue Activity update")
-    except Exception as e:
-        db.rollback()
-        handle_db_error(db, e, "Issue Activity update (unexpected)")
     try:
         db.commit()
         db.refresh(issue_activity)
     except (IntegrityError, DBAPIError, OperationalError) as e:
         db.rollback()
         handle_db_error(db, e, "Issue Activity update")
-    except Exception as e:
-        db.rollback()
-        handle_db_error(db, e, "Issue Activity update (unexpected)")
-
     try:
         crud.audit_log(
             db,
