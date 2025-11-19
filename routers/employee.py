@@ -47,9 +47,6 @@ def create_employee(
     except (IntegrityError, DBAPIError, OperationalError) as e:
         db.rollback()
         handle_db_error(db, e, "Employee creation")
-    except Exception as e:
-        db.rollback()
-        handle_db_error(db, e, "Employee creation (unexpected)")
     try:
         crud.audit_log(
             db,
@@ -88,11 +85,6 @@ def list_employees(db: Session = Depends(get_db)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Database error while fetching Employee list.",
         )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An unexpected error occurred while listing Employee: {e}",
-        )
 
 
 @router.get("/{id}", response_model=schemas.EmployeeViewBase)
@@ -110,11 +102,6 @@ def get_employee(id: str, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=500,
             detail="Database error while fetching Employee details.",
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An unexpected error occurred while fetching Employee details: {e}",
         )
 
 
@@ -163,9 +150,6 @@ def update_employee(
     except (IntegrityError, DBAPIError, OperationalError) as e:
         db.rollback()
         handle_db_error(db, e, "Employee update")
-    except Exception as e:
-        db.rollback()
-        handle_db_error(db, e, "Employee update (unexpected)")
     try:
         crud.audit_log(
             db,
@@ -214,23 +198,14 @@ def archive_employee(
         employee.entity_status = "Archived"
         employee.updated_at = now_utc()
         employee.updated_by = current_employee.employee_id
-    except (IntegrityError, DBAPIError, OperationalError) as e:
-        db.rollback()
-        handle_db_error(db, e, "Employee update")
-
-    except Exception as e:
-        db.rollback()
-        handle_db_error(db, e, "Employee update (unexpected)")
-
+    except Exception:
+        pass
     try:
         db.commit()
         db.refresh(employee)
     except (IntegrityError, DBAPIError, OperationalError) as e:
         db.rollback()
         handle_db_error(db, e, "Employee update")
-    except Exception as e:
-        db.rollback()
-        handle_db_error(db, e, "Employee update (unexpected)")
     try:
         crud.audit_log(
             db,
