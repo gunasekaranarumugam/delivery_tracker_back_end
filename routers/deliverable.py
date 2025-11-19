@@ -44,9 +44,6 @@ def create_deliverable(
     except (IntegrityError, DBAPIError, OperationalError) as e:
         db.rollback()
         handle_db_error(db, e, "Deliverable creation")
-    except Exception as e:
-        db.rollback()
-        handle_db_error(db, e, "Deliverable Creation (unexpected)")
     try:
         crud.audit_log(
             db,
@@ -85,11 +82,6 @@ def list_deliverables(db: Session = Depends(get_db)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Database error while fetching Deliverable list.",
         )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An unexpected error occurred while listing Deliverable: {e}",
-        )
 
 
 @router.get("/{id}", response_model=schemas.DeliverableViewBase)
@@ -107,11 +99,6 @@ def get_deliverable(id: str, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=500,
             detail="Database error while fetching Deliverable details.",
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An unexpected error occurred while fetching Deliverable details: {e}",
         )
 
 
@@ -159,9 +146,6 @@ def update_deliverable(
     except (IntegrityError, DBAPIError, OperationalError) as e:
         db.rollback()
         handle_db_error(db, e, "Deliverable update")
-    except Exception as e:
-        db.rollback()
-        handle_db_error(db, e, "Deliverable update (unexpected)")
     try:
         crud.audit_log(
             db,
@@ -217,21 +201,12 @@ def archive_deliverable(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to apply update payload: {e}",
         )
-    except (IntegrityError, DBAPIError, OperationalError) as e:
-        db.rollback()
-        handle_db_error(db, e, "Deliverable update")
-    except Exception as e:
-        db.rollback()
-        handle_db_error(db, e, "Deliverable update (unexpected)")
-    try:    
+    try:
         db.commit()
         db.refresh(deliverable)
     except (IntegrityError, DBAPIError, OperationalError) as e:
         db.rollback()
         handle_db_error(db, e, "Deliverable update")
-    except Exception as e:
-        db.rollback()
-        handle_db_error(db, e, "Deliverable update (unexpected)")
     try:
         crud.audit_log(
             db,

@@ -44,9 +44,6 @@ def create_business_unit(
     except (IntegrityError, DBAPIError, OperationalError) as e:
         db.rollback()
         handle_db_error(db, e, "Business Unit creation")
-    except Exception as e:
-        db.rollback()
-        handle_db_error(db, e, "Business Unit creation (unexpected)")
     try:
         crud.audit_log(
             db,
@@ -85,11 +82,6 @@ def list_business_units(db: Session = Depends(get_db)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Database error while fetching Business Unit list.",
         )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An unexpected error occurred while listing Business Unit: {e}",
-        )
 
 
 @router.get("/{id}", response_model=schemas.BusinessUnitViewBase)
@@ -107,11 +99,6 @@ def get_business_unit(id: str, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=500,
             detail="Database error while fetching Business Unit details.",
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An unexpected error occurred while fetching Business Unit details: {e}",
         )
 
 
@@ -159,9 +146,6 @@ def update_business_unit(
     except (IntegrityError, DBAPIError, OperationalError) as e:
         db.rollback()
         handle_db_error(db, e, "Business Unit update")
-    except Exception as e:
-        db.rollback()
-        handle_db_error(db, e, "Business Unit update (unexpected)")
     try:
         crud.audit_log(
             db,
@@ -217,22 +201,12 @@ def archive_business_unit(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to apply update payload: {e}",
         )
-    except (IntegrityError, DBAPIError, OperationalError) as e:
-        db.rollback()
-        handle_db_error(db, e, "Business Unit update")
-    except Exception as e:
-        db.rollback()
-        handle_db_error(db, e, "Business Unit update (unexpected)")
     try:
         db.commit()
         db.refresh(business_unit)
     except (IntegrityError, DBAPIError, OperationalError) as e:
         db.rollback()
         handle_db_error(db, e, "Business Unit update")
-    except Exception as e:
-        db.rollback()
-        handle_db_error(db, e, "Business update (unexpected)")
-    
     try:
         crud.audit_log(
             db,
