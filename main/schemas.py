@@ -6,6 +6,41 @@ from pydantic import BaseModel, Field
 from .utils import now_utc
 
 
+class EmployeeBusinessUnitBase(BaseModel):
+    employee_id: str
+    business_unit_id: str
+    created_at: datetime = Field(default_factory=now_utc())
+    created_by: str
+    updated_at: datetime = Field(default_factory=now_utc())
+    updated_by: str
+    entity_status: str = "Active"
+
+
+class EmployeeBusinessUnitViewBase(BaseModel):
+    business_unit_id: str
+    business_unit_name: str
+    business_unit_head_id: str
+    business_unit_head_name: str
+    employee_id: str
+    employee_full_name: str
+    employee_email_address: str
+    created_at: datetime = Field(default_factory=now_utc())
+    created_by: str
+    created_by_name: str
+    updated_at: datetime = Field(default_factory=now_utc())
+    updated_by: str
+    updated_by_name: str
+    entity_status: str = "Active"
+
+
+class EmployeeBusinessUnitCreate(BaseModel):
+    pass
+
+
+class EmployeeBusinessUnitUpdate(BaseModel):
+    pass
+
+
 class EmployeeBase(BaseModel):
     employee_id: str
     employee_full_name: str
