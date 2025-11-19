@@ -2,7 +2,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from routers import (
-    audit_log,
     business_unit,
     deliverable,
     employee,
@@ -32,7 +31,6 @@ openapi_tags = [
     },
     {"name": "Issue", "description": "Track issues related to deliverables"},
     {"name": "IssueActivity", "description": "Track activities on issues"},
-    {"name": "AuditLog", "description": "System audit logs"},
 ]
 
 app = FastAPI(
@@ -73,7 +71,6 @@ app.include_router(issue.router, prefix="/api/Issues", tags=["Issue"])
 app.include_router(
     issue_activity.router, prefix="/api/IssueActivities", tags=["IssueActivity"]
 )
-app.include_router(audit_log.router, prefix="/api/Audit", tags=["AuditLog"])
 
 
 @app.get("/")

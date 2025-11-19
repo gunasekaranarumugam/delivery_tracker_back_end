@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -95,10 +94,25 @@ def list_projects(db: Session = Depends(get_db)):
 
 @router.get("/{id}", response_model=schemas.ProjectViewBase)
 def get_project_by_id(id: str, db: Session = Depends(get_db)):
-    project = (
-        db.query(models.ProjectView).filter(models.ProjectView.project_id == id).first()
-    )
-    return project
+    try:
+        project_view = (
+            db.query(models.ProjectView)
+            .filter(models.ProjectView.project_id == id)
+            .first()
+        )
+        if not project_view:
+            raise HTTPException(status_code=404, detail="Project not found")
+        return project_view
+    except (DBAPIError, OperationalError):
+        raise HTTPException(
+            status_code=500,
+            detail="Database error while fetching Project details.",
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred while fetching Project details: {e}",
+        )
 
 
 @router.put("/{id}", response_model=schemas.ProjectRead, status_code=200)
@@ -108,76 +122,68 @@ def update_project(
     db: Session = Depends(get_db),
     current_employee: models.Employee = Depends(get_current_employee),
 ):
-    """
-    Update project fields in the Project table.
-    Return the fully populated ProjectView for frontend display.
-    """
+
     try:
         project = (
             db.query(models.Project).filter(models.Project.project_id == id).first()
         )
 
         if not project:
-            project = models.Project(
-                project_id=id,
-                **payload.model_dump(exclude_unset=True),
-                created_by=current_employee.employee_id,
-                updated_by=current_employee.employee_id,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
-                entity_status="Active",
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Project not found",
             )
-            db.add(project)
-        else:
-            print(
-                "Payload fields being updated:", payload.model_dump(exclude_unset=True)
-            )
-
-            for key, value in payload.model_dump(exclude_unset=True).items():
-                setattr(project, key, value)
-
-            project.updated_at = datetime.utcnow()
-            project.updated_by = current_employee.employee_id
-
+    except (DBAPIError, OperationalError):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error while fetching Project for update.",
+        )
+    try:
+        update_data = payload.model_dump()
+        for key, value in update_data.items():
+            if value is None:
+                continue
+            if not hasattr(project, key):
+                continue
+            setattr(project, key, value)
+        project.updated_at = now_utc()
+        project.updated_by = current_employee.employee_id
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to apply update payload: {e}",
+        )
+    try:
         db.commit()
         db.refresh(project)
-
-        crud.audit_log(
-            db,
-            "Project",
-            project.project_id,
-            "Update",
-            changed_by=current_employee.employee_id,
-        )
-
-        project_view = (
-            db.query(models.ProjectView)
-            .filter(models.ProjectView.project_id == project.project_id)
-            .first()
-        )
-
-        if not project_view:
-            raise HTTPException(
-                status_code=500, detail="Project updated but view not found"
-            )
-
-        print("Updated project table value:", project.delivery_manager_id)
-        print(
-            "Returned view value:",
-            project_view.delivery_manager_id,
-            project_view.delivery_manager_name,
-        )
-
-        return project_view
-
-        print(project_view.delivery_manager_id, project_view.delivery_manager_name)
-
     except (IntegrityError, DBAPIError, OperationalError) as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+        handle_db_error(db, e, "Project update")
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+        handle_db_error(db, e, "Project update (unexpected)")
+    try:
+        crud.audit_log(
+            db,
+            entity_type="Project",
+            entity_id=project.project_id,
+            action="Update",
+            changed_by=current_employee.employee_id,
+        )
+    except Exception:
+        pass
+    try:
+        project_view = (
+            db.query(models.ProjectView)
+            .filter(models.ProjectView.project_id == id)
+            .first()
+        )
+        return project_view
+    except (DBAPIError, OperationalError):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error while querying Project after update.",
+        )
 
 
 @router.patch("/{id}/archive")
@@ -186,18 +192,54 @@ def archive_project(
     db: Session = Depends(get_db),
     current_employee: models.Employee = Depends(get_current_employee),
 ):
-    project = db.query(models.Project).filter(models.Project.project_id == id).first()
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
-
-    project.entity_status = "ARCHIVED"
-    project.updated_at = datetime.utcnow()
-    project.updated_by = current_employee.employee_id
-
-    db.commit()
-    db.refresh(project)
-
-    return {
-        "message": "Project archived successfully",
-        "project_id": project.project_id,
-    }
+    try:
+        project = (
+            db.query(models.Project).filter(models.Project.project_id == id).first()
+        )
+        if not project:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Project not found",
+            )
+    except (DBAPIError, OperationalError):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error while fetching Project for update.",
+        )
+    try:
+        project.entity_status = "Archived"
+        project.updated_at = now_utc()
+        project.updated_by = current_employee.employee_id
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to apply update payload: {e}",
+        )
+    except (IntegrityError, DBAPIError, OperationalError) as e:
+        db.rollback()
+        handle_db_error(db, e, "Project update")
+    except Exception as e:
+        db.rollback()
+        handle_db_error(db, e, "Project update (unexpected)")
+    try:
+        crud.audit_log(
+            db,
+            entity_type="Project",
+            entity_id=project.project_id,
+            action="Update",
+            changed_by=current_employee.employee_id,
+        )
+    except Exception:
+        pass
+    try:
+        project_view = (
+            db.query(models.ProjectView)
+            .filter(models.ProjectView.entity_status == "Active")
+            .all()
+        )
+        return project_view
+    except (DBAPIError, OperationalError):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error while querying Project view after update.",
+        )
