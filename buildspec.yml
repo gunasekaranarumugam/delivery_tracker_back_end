@@ -10,14 +10,15 @@ phases:
     commands:
       - echo "Build started on `date`"
       - echo "Building the Docker image..."
-      - docker build -t delivery-tracker-back-end-main:latest .
-      - docker tag delivery-tracker-back-end-main:latest 294253399473.dkr.ecr.ap-south-1.amazonaws.com/delivery-tracker-back-end-main:latest
+      - cd $CODEBUILD_SRC_DIR
+      - docker build -t delivery-tracker-back-end-development:latest .
+      - docker tag delivery-tracker-back-end-development:latest 294253399473.dkr.ecr.ap-south-1.amazonaws.com/delivery-tracker-back-end-development:latest
 
   post_build:
     commands:
       - echo "Build completed on `date`"
       - echo "Pushing the Docker image to ECR..."
-      - docker push 294253399473.dkr.ecr.ap-south-1.amazonaws.com/delivery-tracker-back-end-main:latest
+      - docker push 294253399473.dkr.ecr.ap-south-1.amazonaws.com/delivery-tracker-back-end-development:latest
       - echo "Docker image push completed"
       - echo "Creating deployment package for CodeDeploy..."
       - mkdir -p output
@@ -29,4 +30,3 @@ phases:
 artifacts:
   files:
     - output/**/*
-
