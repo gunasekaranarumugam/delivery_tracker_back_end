@@ -3,32 +3,6 @@ version: 0.2
 phases:
   pre_build:
     commands:
-<<<<<<< HEAD
-      - echo Logging in to Amazon ECR...
-      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 294253399473.dkr.ecr.ap-south-1.amazonaws.com
-  build:
-    commands:
-      - echo Build started on `date`
-      - echo Building the Docker image...
-      - docker build -t delivery-tracker-back-end-development:latest .
-      - docker tag delivery-tracker-back-end-development:latest 294253399473.dkr.ecr.ap-south-1.amazonaws.com/delivery-tracker-back-end-development:latest
-
-  post_build:
-    commands:
-      - echo Build completed on `date`
-      - echo Pushing the Docker image...
-      - docker push 294253399473.dkr.ecr.ap-south-1.amazonaws.com/delivery-tracker-back-end-development:latest
-      - echo Push is completed
-      - echo writing image definition file ...
-      - printf '[{"name":"delivery-tracker-back-end-development-container","imageUri":"294253399473.dkr.ecr.ap-south-1.amazonaws.com/delivery-tracker-back-end-development:latest"}]' > imagedefinitions.json
-      - echo "Deploying latest image to ECS..."
-      - aws ecs update-service --cluster delivery-tracker-back-end-development-cluster --service deliveru-tracker-back-end-development-service-brx31uyi --force-new-deployment
-
-
-artifacts:
-  files:
-    - imagedefinitions.json
-=======
       - echo "Logging in to Amazon ECR..."
       - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 294253399473.dkr.ecr.ap-south-1.amazonaws.com
 
@@ -36,6 +10,7 @@ artifacts:
     commands:
       - echo "Build started on `date`"
       - echo "Building the Docker image..."
+      - cd $CODEBUILD_SRC_DIR
       - docker build -t delivery-tracker-back-end-main:latest .
       - docker tag delivery-tracker-back-end-main:latest 294253399473.dkr.ecr.ap-south-1.amazonaws.com/delivery-tracker-back-end-main:latest
 
@@ -55,5 +30,3 @@ artifacts:
 artifacts:
   files:
     - output/**/*
-
->>>>>>> a1383d2c192e5e551131647f8ab2d4e92820d6f9
