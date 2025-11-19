@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -7,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from main import crud, models, schemas
 from main.database import get_db
+from main.utils import handle_db_error, now_utc
 
 from .employee import get_current_employee
 
@@ -14,245 +14,244 @@ from .employee import get_current_employee
 router = APIRouter()
 
 
-def now_utc():
-    return datetime.now(timezone.utc)
-
-
-def handle_db_error(db: Session, e: Exception, operation: str):
-    try:
-        db.rollback()
-    except Exception:
-        pass
-
-    if isinstance(e, IntegrityError):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"{operation} failed due to a data constraint violation (e.g., duplicate ID or foreign key error).",
-        )
-    elif isinstance(e, OperationalError):
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"{operation} failed: Database operational error. Check the SQL syntax or connection.",
-        )
-    elif isinstance(e, DBAPIError):
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"{operation} failed: A database connection or query execution error occurred.",
-        )
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An unexpected error occurred during the {operation} operation.",
-        )
-
-
-@router.post(
-    "/", response_model=schemas.IssueActivityRead, status_code=status.HTTP_201_CREATED
-)
+@router.post("/", response_model=List[schemas.IssueActivityViewBase])
 def create_issue_activity(
     payload: schemas.IssueActivityCreate,
     db: Session = Depends(get_db),
     current_employee: models.Employee = Depends(get_current_employee),
 ):
     try:
-        activity = models.IssueActivity(
-            **payload.model_dump(exclude_unset=True),
-            created_by=current_employee.employee_id,
-            updated_by=current_employee.employee_id,
+        issue_activity = models.IssueActivity(
+            **payload.model_dump(),
             created_at=now_utc(),
+            created_by=current_employee.employee_id,
             updated_at=now_utc(),
+            updated_by=current_employee.employee_id,
+            entity_status="Active",
         )
-    except Exception:
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to initialize Issue Activity model.",
+            detail=(
+                f"Failed to initialize Issue Activity model. "
+                f"Check required fields or data types: {e}"
+            ),
         )
-
     try:
-        db.add(activity)
+        db.add(issue_activity)
         db.commit()
-        db.refresh(activity)
+        db.refresh(issue_activity)
     except (IntegrityError, DBAPIError, OperationalError) as e:
+        db.rollback()
         handle_db_error(db, e, "Issue Activity creation")
     except Exception as e:
+        db.rollback()
         handle_db_error(db, e, "Issue Activity creation (unexpected)")
-
-    activity_view = (
-        db.query(models.IssueActivityView)
-        .filter(
-            models.IssueActivityView.issue_activity_id == activity.issue_activity_id
-        )
-        .first()
-    )
-
-    crud.audit_log(
-        db,
-        "IssueActivity",
-        activity.issue_activity_id,
-        "Create",
-        changed_by=current_employee.employee_id,
-    )
-    return activity_view
-
-
-@router.get("/", response_model=List[schemas.IssueActivityRead])
-def list_issue_activities(
-    limit: int = 100, offset: int = 0, db: Session = Depends(get_db)
-):
     try:
-        return db.query(models.IssueActivityView).all()
+        crud.audit_log(
+            db,
+            "IssueActivity",
+            issue_activity.issue_activity_id,
+            "Create",
+            changed_by=current_employee.employee_id,
+        )
+    except Exception:
+        pass
+    try:
+        issue_activity_view = (
+            db.query(models.IssueActivityView)
+            .filter(models.IssueActivityView.entity_status == "Active")
+            .all()
+        )
+        return issue_activity_view
     except (DBAPIError, OperationalError):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database error while fetching Issue Activities list.",
+            detail="Database error while fetching created Issue Activity view.",
         )
-    except Exception:
+
+
+@router.get("/", response_model=List[schemas.IssueActivityViewBase])
+def list_issue_activities(db: Session = Depends(get_db)):
+    try:
+        issue_activity_view = (
+            db.query(models.IssueActivityView)
+            .filter(models.IssueActivityView.entity_status == "Active")
+            .all()
+        )
+        return issue_activity_view
+    except (DBAPIError, OperationalError):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred while listing Issue Activities.",
+            detail="Database error while fetching Issue Activity list.",
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred while listing Issue Activity : {e}",
         )
 
 
-@router.get("/{id}", response_model=schemas.IssueActivityRead)
+@router.get("/{id}", response_model=schemas.IssueActivityViewBase)
 def get_issue_activity(id: str, db: Session = Depends(get_db)):
     try:
-        activity = (
+        issue_activity_view = (
             db.query(models.IssueActivityView)
             .filter(models.IssueActivityView.issue_activity_id == id)
             .first()
         )
-
-        if not activity:
-            activity = (
-                db.query(models.IssueActivity)
-                .filter(models.IssueActivity.issue_activity_id == id)
-                .first()
-            )
-            if not activity:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Issue Activity not found",
-                )
-
-        return activity
-
-    except HTTPException as e:
-        raise e
+        if not issue_activity_view:
+            raise HTTPException(status_code=404, detail="Issue Activity not found")
+        return issue_activity_view
     except (DBAPIError, OperationalError):
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database error while fetching single Issue Activity.",
+            status_code=500,
+            detail="Database error while fetching Issue Activity details.",
         )
-    except Exception:
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred while fetching Issue Activity.",
+            detail=f"An unexpected error occurred while fetching Issue Activity details: {e}",
         )
 
 
-@router.put("/{id}", response_model=schemas.IssueActivityRead)
+@router.put("/{id}", response_model=schemas.IssueActivityViewBase)
 def update_issue_activity(
     id: str,
     payload: schemas.IssueActivityUpdate,
     db: Session = Depends(get_db),
     current_employee: models.Employee = Depends(get_current_employee),
 ):
-    action = "Update"
-
     try:
-        activity = (
+        issue_activity = (
             db.query(models.IssueActivity)
             .filter(models.IssueActivity.issue_activity_id == id)
             .first()
         )
+        if not issue_activity:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Issue Activity not found",
+            )
     except (DBAPIError, OperationalError):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database error while retrieving Issue Activity for update.",
+            detail="Database error while fetching Issue Activity for update.",
         )
-
-    if not activity:
-        action = "Create"
-        try:
-            activity = models.IssueActivity(
-                issue_activity_id=id,
-                **payload.model_dump(exclude_unset=True),
-                created_by=current_employee.employee_id,
-                updated_by=current_employee.employee_id,
-                created_at=now_utc(),
-                updated_at=now_utc(),
-            )
-            db.add(activity)
-        except Exception:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to initialize new Issue Activity model.",
-            )
-    else:
-        try:
-            for key, value in payload.model_dump(exclude_unset=True).items():
-                setattr(activity, key, value)
-            activity.updated_at = now_utc()
-            activity.updated_by = current_employee.employee_id
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to apply update payload: {e}",
-            )
-
+    try:
+        update_data = payload.model_dump()
+        for key, value in update_data.items():
+            if value is None:
+                continue
+            if not hasattr(issue_activity, key):
+                continue
+            setattr(issue_activity, key, value)
+        issue_activity.updated_at = now_utc()
+        issue_activity.updated_by = current_employee.employee_id
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to apply update payload: {e}",
+        )
     try:
         db.commit()
-        db.refresh(activity)
+        db.refresh(issue_activity)
     except (IntegrityError, DBAPIError, OperationalError) as e:
-        handle_db_error(db, e, f"Issue Activity {action.lower()}")
+        db.rollback()
+        handle_db_error(db, e, "Issue Activity update")
     except Exception as e:
-        handle_db_error(db, e, f"Issue Activity {action.lower()} (unexpected)")
-
+        db.rollback()
+        handle_db_error(db, e, "Issue Activity update (unexpected)")
     try:
-        obj_view = (
+        crud.audit_log(
+            db,
+            entity_type="IssueActivity",
+            entity_id=issue_activity.issue_activity_id,
+            action="Update",
+            changed_by=current_employee.employee_id,
+        )
+    except Exception:
+        pass
+    try:
+        issue_activity_view = (
             db.query(models.IssueActivityView)
-            .filter(
-                models.IssueActivityView.issue_activity_id == activity.issue_activity_id
-            )
+            .filter(models.IssueActivityView.issue_activity_id == id)
             .first()
         )
-        return obj_view
+        return issue_activity_view
     except (DBAPIError, OperationalError):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database error while querying Task Type view after update.",
+            detail="Database error while querying Issue Activity view after update.",
         )
-    crud.audit_log(
-        db,
-        "IssueActivity",
-        activity.issue_activity_id,
-        action,
-        changed_by=current_employee.employee_id,
-    )
 
 
-@router.patch("/{id}/archive")
+@router.patch("/{id}/archive", response_model=List[schemas.IssueActivityViewBase])
 def archive_issue_activity(
     id: str,
     db: Session = Depends(get_db),
     current_employee: models.Employee = Depends(get_current_employee),
 ):
-    activity = (
-        db.query(models.IssueActivity)
-        .filter(models.IssueActivity.issue_activity_id == id)
-        .first()
-    )
-    if not activity:
-        raise HTTPException(status_code=404, detail="IssueActivity not found")
+    try:
+        issue_activity = (
+            db.query(models.IssueActivity)
+            .filter(models.IssueActivity.issue_activity_id == id)
+            .first()
+        )
+        if not issue_activity:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Issue Activity not found",
+            )
+    except (DBAPIError, OperationalError):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error while fetching Issue Activity for update.",
+        )
+    try:
+        issue_activity.entity_status = "Archived"
+        issue_activity.updated_at = now_utc()
+        issue_activity.updated_by = current_employee.employee_id
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to apply update payload: {e}",
+        )
+    except (IntegrityError, DBAPIError, OperationalError) as e:
+        db.rollback()
+        handle_db_error(db, e, "Issue Activity update")
+    except Exception as e:
+        db.rollback()
+        handle_db_error(db, e, "Issue Activity update (unexpected)")
+    try:
+        db.commit()
+        db.refresh(issue_activity)
+    except (IntegrityError, DBAPIError, OperationalError) as e:
+        db.rollback()
+        handle_db_error(db, e, "Issue Activity update")
+    except Exception as e:
+        db.rollback()
+        handle_db_error(db, e, "Issue Activity update (unexpected)")
 
-    activity.entity_status = "ARCHIVED"
-    activity.updated_at = now_utc()
-    activity.updated_by = current_employee.employee_id
-
-    db.commit()
-    db.refresh(activity)
-
-    return {
-        "message": "IssueActivity archived successfully",
-        "activity_id": activity.issue_activity_id,
-    }
+    try:
+        crud.audit_log(
+            db,
+            entity_type="IssueActivity",
+            entity_id=issue_activity.issue_activity_id,
+            action="Update",
+            changed_by=current_employee.employee_id,
+        )
+    except Exception:
+        pass
+    try:
+        issue_activity_view = (
+            db.query(models.IssueActivityView)
+            .filter(models.IssueActivityView.entity_status == "Active")
+            .all()
+        )
+        return issue_activity_view
+    except (DBAPIError, OperationalError):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error while querying Issue Activity view after update.",
+        )
