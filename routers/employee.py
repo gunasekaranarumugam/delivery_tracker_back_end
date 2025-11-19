@@ -214,17 +214,14 @@ def archive_employee(
         employee.entity_status = "Archived"
         employee.updated_at = now_utc()
         employee.updated_by = current_employee.employee_id
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to apply update payload: {e}",
-        )
     except (IntegrityError, DBAPIError, OperationalError) as e:
         db.rollback()
         handle_db_error(db, e, "Employee update")
+
     except Exception as e:
         db.rollback()
         handle_db_error(db, e, "Employee update (unexpected)")
+
     try:
         db.commit()
         db.refresh(employee)
@@ -254,5 +251,5 @@ def archive_employee(
     except (DBAPIError, OperationalError):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database error while querying Employee view after update.",
+            detail="Database error while querying Business Unit view after update.",
         )

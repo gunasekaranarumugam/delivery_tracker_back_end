@@ -212,6 +212,16 @@ def archive_task(
         db.rollback()
         handle_db_error(db, e, "Task update (unexpected)")
     try:
+        db.commit()
+        db.refresh(task)
+    except (IntegrityError, DBAPIError, OperationalError) as e:
+        db.rollback()
+        handle_db_error(db, e, "Task update")
+    except Exception as e:
+        db.rollback()
+        handle_db_error(db, e, "Task update (unexpected)")
+    
+    try:
         crud.audit_log(
             db,
             entity_type="Task",

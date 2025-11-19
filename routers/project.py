@@ -222,6 +222,15 @@ def archive_project(
         db.rollback()
         handle_db_error(db, e, "Project update (unexpected)")
     try:
+        db.commit()
+        db.refresh(project)
+    except (IntegrityError, DBAPIError, OperationalError) as e:
+        db.rollback()
+        handle_db_error(db, e, "Project update")
+    except Exception as e:
+        db.rollback()
+        handle_db_error(db, e, "project update (unexpected)")
+    try:
         crud.audit_log(
             db,
             entity_type="Project",

@@ -224,6 +224,16 @@ def archive_business_unit(
         db.rollback()
         handle_db_error(db, e, "Business Unit update (unexpected)")
     try:
+        db.commit()
+        db.refresh(business_unit)
+    except (IntegrityError, DBAPIError, OperationalError) as e:
+        db.rollback()
+        handle_db_error(db, e, "Business Unit update")
+    except Exception as e:
+        db.rollback()
+        handle_db_error(db, e, "Business update (unexpected)")
+    
+    try:
         crud.audit_log(
             db,
             entity_type="BusinessUnit",

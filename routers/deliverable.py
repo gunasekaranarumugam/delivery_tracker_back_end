@@ -223,6 +223,15 @@ def archive_deliverable(
     except Exception as e:
         db.rollback()
         handle_db_error(db, e, "Deliverable update (unexpected)")
+    try:    
+        db.commit()
+        db.refresh(deliverable)
+    except (IntegrityError, DBAPIError, OperationalError) as e:
+        db.rollback()
+        handle_db_error(db, e, "Deliverable update")
+    except Exception as e:
+        db.rollback()
+        handle_db_error(db, e, "Deliverable update (unexpected)")
     try:
         crud.audit_log(
             db,
