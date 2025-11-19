@@ -44,9 +44,6 @@ def create_task_status(
     except (IntegrityError, DBAPIError, OperationalError) as e:
         db.rollback()
         handle_db_error(db, e, "Task Status creation")
-    except Exception as e:
-        db.rollback()
-        handle_db_error(db, e, "Task Status creation (unexpected)")
     try:
         crud.audit_log(
             db,
@@ -85,11 +82,6 @@ def list_task_status(db: Session = Depends(get_db)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Database error while fetching Task Status list.",
         )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An unexpected error occurred while listing Task Status: {e}",
-        )
 
 
 @router.get("/{id}", response_model=schemas.TaskStatusViewBase)
@@ -107,11 +99,6 @@ def get_task_status(id: str, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=500,
             detail="Database error while fetching Task Status details.",
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An unexpected error occurred while fetching Task Status details: {e}",
         )
 
 
@@ -159,9 +146,6 @@ def update_task_status(
     except (IntegrityError, DBAPIError, OperationalError) as e:
         db.rollback()
         handle_db_error(db, e, "Task Status update")
-    except Exception as e:
-        db.rollback()
-        handle_db_error(db, e, "Task Status update (unexpected)")
     try:
         crud.audit_log(
             db,
@@ -217,22 +201,12 @@ def archive_task_status(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to apply update payload: {e}",
         )
-    except (IntegrityError, DBAPIError, OperationalError) as e:
-        db.rollback()
-        handle_db_error(db, e, "Task Status update")
-    except Exception as e:
-        db.rollback()
-        handle_db_error(db, e, "Task Status update (unexpected)")
     try:
         db.commit()
         db.refresh(task_status)
     except (IntegrityError, DBAPIError, OperationalError) as e:
         db.rollback()
         handle_db_error(db, e, "Task Status update")
-    except Exception as e:
-        db.rollback()
-        handle_db_error(db, e, "Task Status update (unexpected)")
-
     try:
         crud.audit_log(
             db,
