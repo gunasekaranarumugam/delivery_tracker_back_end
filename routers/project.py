@@ -115,7 +115,7 @@ def get_project_by_id(id: str, db: Session = Depends(get_db)):
         )
 
 
-@router.put("/{id}", response_model=schemas.ProjectRead, status_code=200)
+@router.put("/{id}", response_model=schemas.ProjectViewBase)
 def update_project(
     id: str,
     payload: schemas.ProjectUpdate,
@@ -186,7 +186,7 @@ def update_project(
         )
 
 
-@router.patch("/{id}/archive")
+@router.patch("/{id}/archive", response_model=List[schemas.ProjectViewBase])
 def archive_project(
     id: str,
     db: Session = Depends(get_db),
