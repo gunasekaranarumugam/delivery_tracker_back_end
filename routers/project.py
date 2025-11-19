@@ -44,9 +44,6 @@ def create_project(
     except (IntegrityError, DBAPIError, OperationalError) as e:
         db.rollback()
         handle_db_error(db, e, "Project creation")
-    except Exception as e:
-        db.rollback()
-        handle_db_error(db, e, "Project creation (unexpected)")
     try:
         crud.audit_log(
             db,
@@ -85,11 +82,6 @@ def list_projects(db: Session = Depends(get_db)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Database error while fetching created Project view.",
         )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An unexpected error occurred while listing Project: {e}",
-        )
 
 
 @router.get("/{id}", response_model=schemas.ProjectViewBase)
@@ -107,11 +99,6 @@ def get_project_by_id(id: str, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=500,
             detail="Database error while fetching Project details.",
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An unexpected error occurred while fetching Project details: {e}",
         )
 
 
@@ -159,9 +146,6 @@ def update_project(
     except (IntegrityError, DBAPIError, OperationalError) as e:
         db.rollback()
         handle_db_error(db, e, "Project update")
-    except Exception as e:
-        db.rollback()
-        handle_db_error(db, e, "Project update (unexpected)")
     try:
         crud.audit_log(
             db,
@@ -215,21 +199,12 @@ def archive_project(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to apply update payload: {e}",
         )
-    except (IntegrityError, DBAPIError, OperationalError) as e:
-        db.rollback()
-        handle_db_error(db, e, "Project update")
-    except Exception as e:
-        db.rollback()
-        handle_db_error(db, e, "Project update (unexpected)")
     try:
         db.commit()
         db.refresh(project)
     except (IntegrityError, DBAPIError, OperationalError) as e:
         db.rollback()
         handle_db_error(db, e, "Project update")
-    except Exception as e:
-        db.rollback()
-        handle_db_error(db, e, "project update (unexpected)")
     try:
         crud.audit_log(
             db,
