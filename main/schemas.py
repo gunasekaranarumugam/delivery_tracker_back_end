@@ -377,6 +377,7 @@ class TaskUpdate(BaseModel):
     assignee_name: Optional[str] = None
     reviewer_name: Optional[str] = None
     priority: Optional[str] = None
+    effort_estimated_in_hours: Optional[str] = None
     baseline_start_date: Optional[datetime] = None
     baseline_end_date: Optional[datetime] = None
     planned_start_date: Optional[datetime] = None
@@ -502,6 +503,7 @@ class TaskStatusUpdate(BaseModel):
     project_name: Optional[str] = None
     delivery_manager_name: Optional[str] = None
     deliverable_name: Optional[str] = None
+    hours_spent: Optional[str] = None
     task_name: Optional[str] = None
     action_date: Optional[datetime] = None
     progress: Optional[str] = None
