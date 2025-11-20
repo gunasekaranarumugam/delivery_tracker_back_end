@@ -14,7 +14,7 @@ from .login import get_current_employee, hash_password
 router = APIRouter()
 
 
-@router.post("/", response_model=List[schemas.EmployeeViewBase])
+@router.post("/", response_model=schemas.EmployeeViewBase)
 def create_employee(
     payload: schemas.EmployeeCreate,
     db: Session = Depends(get_db),
@@ -60,8 +60,8 @@ def create_employee(
     try:
         employee_view = (
             db.query(models.EmployeeView)
-            .filter(models.EmployeeView.entity_status == "Active")
-            .all()
+            .filter(models.EmployeeView.employee_id == employee.employee_id)
+            .first()
         )
         return employee_view
     except (DBAPIError, OperationalError):

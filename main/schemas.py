@@ -381,6 +381,7 @@ class TaskUpdate(BaseModel):
     baseline_end_date: Optional[datetime] = None
     planned_start_date: Optional[datetime] = None
     planned_end_date: Optional[datetime] = None
+    effort_estimated_in_hours: str
 
 
 class TaskRead(TaskViewBase):
@@ -506,6 +507,7 @@ class TaskStatusUpdate(BaseModel):
     action_date: Optional[datetime] = None
     progress: Optional[str] = None
     remarks: Optional[str] = None
+    hours_spent: str
 
 
 class TaskStatusRead(TaskStatusViewBase):
