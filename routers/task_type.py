@@ -14,7 +14,7 @@ from .employee import get_current_employee
 router = APIRouter()
 
 
-@router.post("/", response_model=List[schemas.TaskTypeViewBase])
+@router.post("/", response_model=schemas.TaskTypeViewBase)
 def create_task_type(
     payload: schemas.TaskTypeCreate,
     db: Session = Depends(get_db),
@@ -57,8 +57,8 @@ def create_task_type(
     try:
         task_type_view = (
             db.query(models.TaskTypeView)
-            .filter(models.TaskTypeView.entity_status == "Active")
-            .all()
+            .filter(models.TaskTypeView.task_type_id == task_type.task_type_id)
+            .first()
         )
         return task_type_view
     except (DBAPIError, OperationalError):

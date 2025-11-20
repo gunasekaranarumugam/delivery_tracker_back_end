@@ -14,7 +14,7 @@ from .employee import get_current_employee
 router = APIRouter()
 
 
-@router.post("/", response_model=List[schemas.BusinessUnitViewBase])
+@router.post("/", response_model=schemas.BusinessUnitViewBase)
 def create_business_unit(
     payload: schemas.BusinessUnitCreate,
     db: Session = Depends(get_db),
@@ -57,8 +57,11 @@ def create_business_unit(
     try:
         business_unit_view = (
             db.query(models.BusinessUnitView)
-            .filter(models.BusinessUnitView.entity_status == "Active")
-            .all()
+            .filter(
+                models.BusinessUnitView.business_unit_id
+                == business_unit.business_unit_id
+            )
+            .first()
         )
         return business_unit_view
     except (DBAPIError, OperationalError):

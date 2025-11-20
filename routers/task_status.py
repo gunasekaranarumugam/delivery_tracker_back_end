@@ -14,7 +14,7 @@ from .employee import get_current_employee
 router = APIRouter()
 
 
-@router.post("/", response_model=List[schemas.TaskStatusViewBase])
+@router.post("/", response_model=schemas.TaskStatusViewBase)
 def create_task_status(
     payload: schemas.TaskStatusCreate,
     db: Session = Depends(get_db),
@@ -57,8 +57,8 @@ def create_task_status(
     try:
         task_status_view = (
             db.query(models.TaskStatusView)
-            .filter(models.TaskStatusView.entity_status == "Active")
-            .all()
+            .filter(models.TaskStatusView.task_status_id == task_status.task_status_id)
+            .first()
         )
         return task_status_view
     except (DBAPIError, OperationalError):

@@ -14,7 +14,7 @@ from .employee import get_current_employee
 router = APIRouter()
 
 
-@router.post("/", response_model=List[schemas.IssueActivityViewBase])
+@router.post("/", response_model=schemas.IssueActivityViewBase)
 def create_issue_activity(
     payload: schemas.IssueActivityCreate,
     db: Session = Depends(get_db),
@@ -57,8 +57,11 @@ def create_issue_activity(
     try:
         issue_activity_view = (
             db.query(models.IssueActivityView)
-            .filter(models.IssueActivityView.entity_status == "Active")
-            .all()
+            .filter(
+                models.IssueActivityView.issue_activity_id
+                == issue_activity.issue_activity_id
+            )
+            .first()
         )
         return issue_activity_view
     except (DBAPIError, OperationalError):

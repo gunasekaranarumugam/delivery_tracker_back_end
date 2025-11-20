@@ -14,7 +14,7 @@ from .employee import get_current_employee
 router = APIRouter()
 
 
-@router.post("/", response_model=List[schemas.ProjectViewBase])
+@router.post("/", response_model=schemas.ProjectViewBase)
 def create_project(
     payload: schemas.ProjectCreate,
     db: Session = Depends(get_db),
@@ -57,8 +57,8 @@ def create_project(
     try:
         project_view = (
             db.query(models.ProjectView)
-            .filter(models.ProjectView.entity_status == "Active")
-            .all()
+            .filter(models.ProjectView.project_id == project.project_id)
+            .first()
         )
         return project_view
     except (DBAPIError, OperationalError):

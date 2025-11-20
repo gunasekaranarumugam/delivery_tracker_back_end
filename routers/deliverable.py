@@ -14,7 +14,7 @@ from .employee import get_current_employee
 router = APIRouter()
 
 
-@router.post("/", response_model=List[schemas.DeliverableViewBase])
+@router.post("/", response_model=schemas.DeliverableViewBase)
 def create_deliverable(
     payload: schemas.DeliverableCreate,
     db: Session = Depends(get_db),
@@ -57,8 +57,8 @@ def create_deliverable(
     try:
         deliverable_view = (
             db.query(models.DeliverableView)
-            .filter(models.DeliverableView.entity_status == "Active")
-            .all()
+            .filter(models.DeliverableView.deliverable_id == deliverable.deliverable_id)
+            .first()
         )
         return deliverable_view
     except (DBAPIError, OperationalError):
