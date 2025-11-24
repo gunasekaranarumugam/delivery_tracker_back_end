@@ -2,7 +2,7 @@ version: 0.0
 os: linux
 files:
   - source: /
-    destination: /home/ec2-user/delivery-tracker-back-end-main
+    destination: /home/ec2-user/delivery_tracker_main
 file_exists_behavior: OVERWRITE
 hooks:
   AfterInstall:
